@@ -3,7 +3,7 @@
 This file renders what the core already produces; it contains no retrieval
 or generation logic. It touches exactly two ``src`` entry points:
 
-    - ``build_graph()``   -> the same two-agent LangGraph the CLI runs
+    - ``build_graph()``   -> the same agentic LangGraph the CLI runs
     - ``get_retriever()`` -> the same factory the tool layer uses, warmed
                              per mode so switching modes stays instant
 
@@ -110,7 +110,7 @@ _EXAMPLES = (
 # ------------------------------------------------------- cached core hooks ---
 @st.cache_resource(show_spinner=False)
 def load_graph():
-    """Compile the two-agent LangGraph once per server process."""
+    """Compile the agentic LangGraph once per server process."""
     return build_graph()
 
 

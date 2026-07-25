@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from src.graph import PipelineState
 
 RETRIEVER_SYSTEM_PROMPT = """\
-You are the Data Retriever agent in a two-agent pipeline. Your ONLY job
+You are the Data Retriever agent in a retrieval pipeline. Your ONLY job
 is information retrieval from the company knowledge base.
 
 Rules:

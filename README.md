@@ -1,12 +1,17 @@
 # Agentic RAG System (LangGraph + OpenAI)
 
-A two-agent, sequential RAG pipeline: a **Data Retriever** agent that is
-structurally forced to search a local knowledge base through a custom tool,
-and a **Report Generator** agent that synthesizes a grounded answer from the
-retrieved snippets only. Retrieval runs in one of three modes — **keyword**
-(BM25), **semantic** (embeddings), or **hybrid** (rank fusion of both) — behind
-one `Retriever` protocol, so the agents, tool, and graph never change when the
-strategy does. A CLI and a Streamlit UI drive the *same* compiled graph.
+An **agentic RAG pipeline** on LangGraph that makes three decisions per query:
+a **Router** decides whether the question needs the knowledge base at all
+(small talk never touches it); a **Data Retriever** — structurally forced
+through a search tool — retrieves evidence, and when a search comes back empty
+a **Query Rewriter** reformulates the query (same intent, different wording)
+and retries, up to `MAX_SEARCH_ATTEMPTS`; a **Report Generator** synthesizes a
+grounded answer from the retrieved snippets only, falling back to a
+deterministic not-found sentence when nothing clears the relevance gates.
+Retrieval runs in one of three modes — **keyword** (BM25), **semantic**
+(embeddings), or **hybrid** (rank fusion of both) — behind one `Retriever`
+protocol, so the agents, tool, and graph never change when the strategy does.
+A CLI and a Streamlit UI drive the *same* compiled graph.
 
 ## Architecture
 
@@ -17,10 +22,15 @@ flowchart TB
     CLI & UI -->|"build_graph()"| BG
 
     subgraph BG["LangGraph pipeline — shared core, both entry points call it"]
-      direction LR
-      Q[User Query] --> R["Data Retriever Agent<br/>forced tool call (tool_choice=required)"]
-      R -. "handoff via shared state" .-> GEN["Report Generator Agent<br/>synthesizes from snippets only"]
+      direction TB
+      Q[User Query] --> RT["Router<br/>classify: kb_query / direct (fail-safe → kb_query)"]
+      RT -->|"direct — small talk only"| DIR["Direct Responder<br/>short reply, no retrieval, no facts"]
+      RT -->|kb_query| R["Data Retriever Agent<br/>forced tool call (tool_choice=required)"]
+      R -->|"snippets found, or attempts = MAX"| GEN["Report Generator Agent<br/>synthesizes from snippets only"]
+      R -->|"empty & attempts < MAX"| RW["Query Rewriter<br/>new wording, same intent"]
+      RW --> R
       GEN --> OUT["Grounded answer<br/>or deterministic not-found"]
+      DIR --> OUT
     end
 
     R -->|"search_knowledge_base"| F{{"get_retriever(mode)"}}
@@ -33,21 +43,28 @@ flowchart TB
     K & S & H -. "ranked, gated snippets" .-> R
 ```
 
-**Orchestration pattern — sequential handoff through shared state.** The data
-flow is a `TypedDict` whose three required fields are the whole contract:
+**Orchestration pattern — handoff through shared state, with conditional
+edges.** The data flow is a `TypedDict` whose three required fields are the
+core contract:
 
 ```python
 class PipelineState(TypedDict):
     query: str            # user question (input)
     snippets: list[str]   # Data Retriever output -> handoff to the Generator
-    report: str           # Report Generator output (final answer)
-    # + optional NotRequired fields (search_mode, top_k, hits) for the UI
+    report: str           # final answer (Generator or Direct Responder)
+    # + NotRequired fields: route, search_attempts, rewritten_query,
+    #   search_mode, top_k, search_query, hits
 ```
 
-The graph is `START -> data_retriever -> report_generator -> END`. The retriever
-node writes `snippets` into the state; LangGraph follows the
-`data_retriever -> report_generator` edge and hands that state to the generator —
-that edge *is* the handoff.
+The graph is `START -> router -> (direct_responder | data_retriever)`; after
+each retrieval attempt a conditional edge sends the state to the generator
+(snippets found, or the attempt budget is spent) or to the rewriter, which
+loops back to the retriever. Two properties are guaranteed structurally: the
+loop is bounded (`search_attempts` grows on *every* pass, including the
+fail-closed one, and the edge condition checks it against
+`MAX_SEARCH_ATTEMPTS`), and retry attempts use the rewriter's query verbatim —
+the retriever's own LLM call and its English-copy heuristic are bypassed, so a
+rewrite can never be silently overridden back to the original wording.
 
 ## Project Structure
 
@@ -147,9 +164,11 @@ and *IT Security and Password Policy*, deduplicated into one answer:
 
 ![Remote work query — multi-section synthesis](screenshots/02_remote_work.png)
 
-**“What is the CEO's salary?”** — the designed knowledge-base gap. Zero
-snippets clear the relevance gates, so the deterministic not-found fallback
-fires with no LLM call:
+**“What is the CEO's salary?”** — the designed knowledge-base gap. The retry
+loop spends its attempts (each rewrite still finds nothing relevant), and the
+answer is the not-found sentence — byte-exact, as the answer-level eval
+verifies on every run. (Screenshot from the pre-retry pipeline; the current
+CLI/UI additionally show each failed attempt.)
 
 ![CEO salary query — not-found guardrail](screenshots/03_not_found_guardrail.png)
 
@@ -219,11 +238,36 @@ sentences ("Below is a checklist…"), not factual fabrications.
 
 ## Design Decisions
 
-**Why LangGraph + sequential handoff.** The assignment's core is orchestration,
-and LangGraph makes it *inspectable*: agents are nodes, execution order is an
-explicit edge list, and the agent-to-agent contract is a typed state schema.
-Shared state makes the handoff a first-class object (`snippets`) rather than an
-implicit call chain, and the pipeline extends by adding a node and an edge.
+**Why LangGraph + shared-state handoff.** The assignment's core is
+orchestration, and LangGraph makes it *inspectable*: agents are nodes,
+execution order is an explicit edge list, and the agent-to-agent contract is a
+typed state schema. Shared state makes the handoff a first-class object
+(`snippets`) rather than an implicit call chain — and the agentic behaviours
+are explicit conditional edges, not prompt-level hopes: the retry loop and the
+router's branch are both plain Python functions over the state.
+
+**Router fails safe toward retrieval.** Only an explicit `direct` verdict
+skips the knowledge base; an ambiguous, malformed, or missing verdict takes
+the retrieval path. The asymmetry is deliberate: the retrieval path ends in a
+guarded not-found fallback, while the direct path has only a prompt between
+the model and an unsourced answer — so misrouting small talk into retrieval
+costs latency, but misrouting a factual question into the direct path could
+cost groundedness. The direct responder is additionally forbidden from
+answering factual questions at all.
+
+**The retry loop trades latency for recall — and negatives pay the bill.**
+Rewriting and retrying recovers queries that single-shot retrieval missed
+("I want to quit my job" finds *Resignation Process* on attempt 2 even in
+keyword mode), but a query the KB genuinely cannot answer now burns all
+`MAX_SEARCH_ATTEMPTS` before reaching not-found (~2 extra LLM calls). That is
+the intended direction of the trade: a slower "not found" is recoverable, a
+fabricated answer is not. End-to-end sampling also exposed a subtler failure —
+the rewriter once turned a request *for* data ("employee home addresses") into
+a query *about* data-handling policy, surfacing sections that let the
+generator answer with classification rules. The fix is layered: the rewriter
+must preserve the request itself, not just the topic, and the generator treats
+related-but-not-answering snippets as grounds for not-found; the answer-level
+eval's byte-exact negative check now guards the regression.
 
 **Retrieval guardrails, in layers.** The retriever binds its tool with
 `tool_choice="required"` and executes only the first call, so the model
@@ -268,14 +312,17 @@ offline, no API cost, best on exact-identifier lookups; reach for
 semantic/hybrid when vocabulary-mismatch recall is worth the latency and cost.
 
 **Why the UI shows pipeline stages, not a chatbox.** A chat window would hide
-the one thing this system exists to show — that the answer comes from a two-stage
-pipeline with an inspectable evidence hand-off. **Stage 1** renders every
-retrieved snippet with its rank, score, and a provenance badge (BM25 /
-embeddings / both under fusion); **Stage 2** shows the grounded answer, visually
-separated so it is clearly synthesized *from the evidence above*, and surfaces
-the deterministic not-found fallback verbatim when retrieval is empty. The
-sidebar switches mode and `top_k` per query — making the evaluation comparison
-reproducible interactively — and per-stage telemetry accompanies each run.
+the one thing this system exists to show — that the answer comes from an
+agentic pipeline with inspectable decisions and an evidence hand-off. The
+telemetry strip shows the router's verdict and the attempt count; **Stage 1**
+renders every retrieved snippet with its rank, score, source file, and a
+provenance badge (BM25 / embeddings / both under fusion), plus the full search-attempt
+trail when the query was rewritten; **Stage 2** shows the grounded answer,
+visually separated so it is clearly synthesized *from the evidence above*, and
+surfaces the deterministic not-found fallback verbatim when retrieval is empty.
+The sidebar switches mode and `top_k` per query — making the evaluation
+comparison reproducible interactively — and per-stage telemetry accompanies
+each run.
 `app.py` is pure presentation: it calls the same `build_graph()` and
 `get_retriever()` the CLI and tool layer use, cached with `st.cache_resource`.
 
