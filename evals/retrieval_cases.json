@@ -5,7 +5,8 @@
     "expected_titles": [
       "International Travel Approval Process",
       "International Travel Daily Allowance",
-      "International Travel Insurance"
+      "International Travel Insurance",
+      "International Travel Visa Support"
     ]
   },
   {
@@ -35,12 +36,18 @@
   {
     "id": "cybersecurity_incident",
     "query": "What are the cybersecurity incident reporting rules?",
-    "expected_titles": ["IT Security and Password Policy"]
+    "expected_titles": [
+      "IT Security and Password Policy",
+      "Security Incident Response Process"
+    ]
   },
   {
     "id": "phishing_incident",
     "query": "How do I report a phishing incident?",
-    "expected_titles": ["IT Security and Password Policy"]
+    "expected_titles": [
+      "IT Security and Password Policy",
+      "Security Incident Response Process"
+    ]
   },
   {
     "id": "annual_leave_carryover",
