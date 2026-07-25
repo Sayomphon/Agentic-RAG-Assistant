@@ -175,7 +175,17 @@ def render_run(run: dict) -> None:
     st.markdown(_telemetry(run), unsafe_allow_html=True)
 
     _stage_head(1, "Data Retriever Agent", "forced tool call → ranked evidence from the knowledge base")
-    if run["search_query"] != run["query"]:
+    attempts = run.get("search_attempts") or []
+    if len(attempts) > 1:
+        # Every attempt before the last found nothing — the rewriter then
+        # proposed the next query. Show the whole agentic trail.
+        trail = "".join(
+            f'<div>attempt {i}: “{html.escape(attempt)}” → '
+            f'{len(run["hits"]) if i == len(attempts) else 0} result(s)</div>'
+            for i, attempt in enumerate(attempts, start=1)
+        )
+        st.caption(f"Search attempts (query rewritten on empty results):{trail}", unsafe_allow_html=True)
+    elif run["search_query"] != run["query"]:
         st.caption(f'Agent reformulated the search as: “{run["search_query"]}”')
     if run["hits"]:
         st.markdown(_snippet_cards(run["hits"]), unsafe_allow_html=True)
@@ -218,7 +228,7 @@ def execute(query: str, mode: str, top_k: int) -> dict | None:
     run = {
         "query": query, "mode": mode, "top_k": top_k, "model": MODEL_NAME,
         "snippets": [], "hits": [], "report": "", "search_query": query,
-        "timings": {},
+        "search_attempts": [], "timings": {},
     }
     stage1 = st.status("**Stage 1 · Data Retriever** — choosing a search query and retrieving…", state="running")
     stage2 = None
@@ -229,25 +239,50 @@ def execute(query: str, mode: str, top_k: int) -> dict | None:
              "search_mode": mode, "top_k": top_k},
             stream_mode="updates",
         ):
+            # The retry loop may fire data_retriever / query_rewriter
+            # several times; retrieval time accumulates across attempts.
             if "data_retriever" in update:
-                run["timings"]["retrieval"] = time.perf_counter() - started
-                run.update(update["data_retriever"] or {})
-                stage1.update(
-                    label=(f"**Stage 1 · Data Retriever** — {len(run['snippets'])} "
-                           f"snippet(s) in {run['timings']['retrieval']:.1f}s"),
-                    state="complete",
+                run["timings"]["retrieval"] = (
+                    run["timings"].get("retrieval", 0) + time.perf_counter() - started
                 )
+                run.update(update["data_retriever"] or {})
                 started = time.perf_counter()
-                stage2 = st.status("**Stage 2 · Report Generator** — synthesizing the grounded answer…", state="running")
-            elif "report_generator" in update:
-                run["timings"]["synthesis"] = time.perf_counter() - started
-                run.update(update["report_generator"] or {})
-                if stage2 is not None:
-                    stage2.update(
-                        label=(f"**Stage 2 · Report Generator** — answered in "
-                               f"{run['timings']['synthesis']:.1f}s"),
+                attempts = run.get("search_attempts") or []
+                if run["snippets"]:
+                    stage1.update(
+                        label=(f"**Stage 1 · Data Retriever** — {len(run['snippets'])} "
+                               f"snippet(s) in {len(attempts)} attempt(s), "
+                               f"{run['timings']['retrieval']:.1f}s"),
                         state="complete",
                     )
+                    stage2 = st.status("**Stage 2 · Report Generator** — synthesizing the grounded answer…", state="running")
+                else:
+                    stage1.update(
+                        label=(f"**Stage 1 · Data Retriever** — attempt "
+                               f"{len(attempts)} found nothing, rewriting the query…"),
+                        state="running",
+                    )
+            elif "query_rewriter" in update:
+                run.update(update["query_rewriter"] or {})
+            elif "report_generator" in update:
+                run["timings"]["synthesis"] = time.perf_counter() - started
+                attempts = run.get("search_attempts") or []
+                if not run["snippets"]:
+                    # All attempts exhausted: close stage 1 as a clean miss.
+                    stage1.update(
+                        label=(f"**Stage 1 · Data Retriever** — 0 snippets after "
+                               f"{len(attempts)} attempt(s), "
+                               f"{run['timings'].get('retrieval', 0):.1f}s"),
+                        state="complete",
+                    )
+                run.update(update["report_generator"] or {})
+                if stage2 is None:
+                    stage2 = st.status("**Stage 2 · Report Generator**", state="running")
+                stage2.update(
+                    label=(f"**Stage 2 · Report Generator** — answered in "
+                           f"{run['timings']['synthesis']:.1f}s"),
+                    state="complete",
+                )
     except Exception as exc:  # noqa: BLE001 — surface any provider error readably
         for status in (stage1, stage2):
             if status is not None:

@@ -55,37 +55,59 @@ def _select_search_query(user_query: str, tool_args: dict[str, object]) -> str:
 def retriever_node(state: PipelineState) -> dict[str, object]:
     """Force a knowledge-base search and hand the snippets off via state.
 
+    On the first attempt the LLM picks the search query (forced tool
+    call). On retry attempts the Query Rewriter has already chosen the
+    query (``rewritten_query``), so it is used verbatim — bypassing both
+    the LLM call and ``_select_search_query``, which would otherwise
+    copy the user's wording back and defeat the rewrite entirely.
+
     Args:
         state: Pipeline state containing the user ``query``, plus optional
             per-run ``search_mode`` / ``top_k`` overrides (UI knobs; the
-            config defaults apply when absent).
+            config defaults apply when absent) and the retry-loop fields
+            ``rewritten_query`` / ``search_attempts``.
 
     Returns:
         Partial state update with the retrieved ``snippets``, the scored
         ``hits`` (title/score/source metadata for presentation layers),
-        and the ``search_query`` that was actually executed.
+        the ``search_query`` that was actually executed, and the updated
+        ``search_attempts`` history. ``rewritten_query`` is cleared so a
+        stale rewrite can never leak into a later attempt.
     """
-    llm_with_tool = get_llm().bind_tools(
-        [search_knowledge_base],
-        tool_choice="required",  # structural guardrail: answering is impossible
-    )
-    ai_msg = llm_with_tool.invoke(
-        [
-            SystemMessage(content=RETRIEVER_SYSTEM_PROMPT),
-            HumanMessage(content=state["query"]),
-        ]
-    )
-    if not ai_msg.tool_calls:
-        return {"snippets": [], "hits": []}
+    attempts = state.get("search_attempts", [])
+    rewritten_query = str(state.get("rewritten_query", "")).strip()
+    if rewritten_query:
+        # Retry attempt: always trust the rewriter's query.
+        search_query = rewritten_query
+    else:
+        llm_with_tool = get_llm().bind_tools(
+            [search_knowledge_base],
+            tool_choice="required",  # structural guardrail: answering is impossible
+        )
+        ai_msg = llm_with_tool.invoke(
+            [
+                SystemMessage(content=RETRIEVER_SYSTEM_PROMPT),
+                HumanMessage(content=state["query"]),
+            ]
+        )
+        if not ai_msg.tool_calls:
+            # Fail closed, but still record the attempt: the retry loop
+            # exits on the attempt bound, so the count must always grow.
+            return {
+                "snippets": [],
+                "hits": [],
+                "search_attempts": [*attempts, state["query"]],
+                "rewritten_query": "",
+            }
+        search_query = _select_search_query(
+            state["query"],
+            ai_msg.tool_calls[0]["args"],
+        )
 
-    # Execute one tool call only, through the same ranking path the tool
+    # Execute one search only, through the same ranking path the tool
     # wraps (``search_scored`` keeps the score/source metadata that the
     # string-only tool output drops). The extra slice keeps the output
     # bound deterministic even if a lower layer misbehaves.
-    search_query = _select_search_query(
-        state["query"],
-        ai_msg.tool_calls[0]["args"],
-    )
     top_k = state.get("top_k") or TOP_K
     hits = search_scored(
         search_query,
@@ -96,4 +118,6 @@ def retriever_node(state: PipelineState) -> dict[str, object]:
         "snippets": [hit.as_snippet() for hit in hits],
         "hits": hits,
         "search_query": search_query,
+        "search_attempts": [*attempts, search_query],
+        "rewritten_query": "",
     }

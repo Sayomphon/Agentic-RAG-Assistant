@@ -30,6 +30,11 @@ TITLE_BOOST: float = float(os.getenv("TITLE_BOOST", "1.5"))
 # Retrieval mode: "keyword" (BM25), "semantic" (embeddings), or "hybrid" (both)
 SEARCH_MODE: str = os.getenv("SEARCH_MODE", "keyword")
 
+# Agentic retry loop: total search attempts per query (first attempt included).
+# When an attempt yields zero snippets, the query rewriter proposes a new
+# search query and the retriever tries again, up to this bound.
+MAX_SEARCH_ATTEMPTS: int = int(os.getenv("MAX_SEARCH_ATTEMPTS", "3"))
+
 # Dense retrieval (used by "semantic" and "hybrid" modes only)
 EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 # Cosine relevance gate. Cosine similarity is never zero, so without this

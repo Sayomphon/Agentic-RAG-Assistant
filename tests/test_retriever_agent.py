@@ -129,7 +129,17 @@ class RetrieverAgentTests(unittest.TestCase):
 
         result = retriever_node({"query": "question", "snippets": [], "report": ""})
 
-        self.assertEqual(result, {"snippets": [], "hits": []})
+        # Fail closed, but the attempt is still recorded — the retry loop
+        # terminates on the attempt count, so it must grow on every pass.
+        self.assertEqual(
+            result,
+            {
+                "snippets": [],
+                "hits": [],
+                "search_attempts": ["question"],
+                "rewritten_query": "",
+            },
+        )
 
 
 if __name__ == "__main__":

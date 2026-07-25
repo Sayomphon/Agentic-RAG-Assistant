@@ -44,6 +44,13 @@ def run_query(graph: CompiledStateGraph, query: str) -> None:
     result = graph.invoke({"query": query, "snippets": [], "report": ""})
 
     print("[2] RETRIEVED SNIPPETS  (Data Retriever Agent -> tool call)")
+    attempts = result.get("search_attempts", [])
+    if attempts:
+        # Every attempt before the last returned zero snippets by
+        # construction — a hit ends the retry loop immediately.
+        for i, attempt in enumerate(attempts, start=1):
+            found = len(result["snippets"]) if i == len(attempts) else 0
+            print(f'    attempt {i}: "{attempt}" -> {found} result(s)')
     if result["snippets"]:
         for i, snippet in enumerate(result["snippets"], start=1):
             title, _, body = snippet.partition("\n")
