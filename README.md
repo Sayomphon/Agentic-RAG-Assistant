@@ -145,8 +145,8 @@ per question — the router's verdict, each search attempt with the rewritten
 query, the evidence with scores and provenance, and the final answer verbatim.
 Generated with `python -m src.evaluation.run_qa`.
 
-Captured from `streamlit run app.py` in **hybrid** mode. Each run shows the full
-pipeline in one view: the Data Retriever's ranked evidence with scores and
+Captured from `streamlit run app.py` in **hybrid** mode (except where a caption
+notes otherwise). Each run shows the full pipeline in one view: the Data Retriever's ranked evidence with scores and
 provenance badges (Stage 1), then the Report Generator's grounded answer
 (Stage 2). Every claim in the answer ends with a citation to the section it
 came from (e.g. `[Remote Work Policy]`), so each statement is traceable to the
@@ -167,8 +167,8 @@ and *IT Security and Password Policy*, deduplicated into one answer:
 **“What is the CEO's salary?”** — the designed knowledge-base gap. The retry
 loop spends its attempts (each rewrite still finds nothing relevant), and the
 answer is the not-found sentence — byte-exact, as the answer-level eval
-verifies on every run. (Screenshot from the pre-retry pipeline; the current
-CLI/UI additionally show each failed attempt.)
+verifies on every run. (This screenshot predates the retry loop; the attempt
+trail the current pipeline produces is shown two examples below.)
 
 ![CEO salary query — not-found guardrail](screenshots/03_not_found_guardrail.png)
 
@@ -176,6 +176,22 @@ CLI/UI additionally show each failed attempt.)
 retriever reformulates the search in English to match the handbook's wording:
 
 ![Thai query — cross-lingual retrieval and Thai answer](screenshots/04_thai_query.png)
+
+**“I want to quit my job” (keyword mode)** — the retry loop in action. The
+first search (the query verbatim) clears no gates, so the Query Rewriter
+reformulates it as *“Voluntary resignation policy and required notice period”*
+and the second attempt retrieves *Resignation Process* — recovering in keyword
+mode a query that vocabulary mismatch would otherwise miss. The telemetry strip
+records `attempts 2`, and Stage 1 shows the full attempt trail:
+
+![Retry loop — empty first search, rewritten query, then recovered evidence](screenshots/05_retry_trail.png)
+
+**“Hello! What can you do?”** — the Router short-circuits. Classified as small
+talk, the query routes `direct`: the knowledge base is never searched (no Stage 1
+retrieval, no snippets), and the Direct Responder returns a brief reply that
+answers nothing factual — the telemetry strip shows `route direct`:
+
+![Router — small talk routed direct, the knowledge base untouched](screenshots/06_router_direct.png)
 
 ## Evaluation Results
 
