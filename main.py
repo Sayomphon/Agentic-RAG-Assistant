@@ -4,9 +4,9 @@ Usage:
     python main.py "What is the policy on international travel?"   # single query
     python main.py                                                  # interactive loop
 
-Prints three clearly separated stages — user query, retrieved snippets,
-final answer — so every run shows evidence that retrieval actually
-happened before generation.
+Prints clearly separated stages — user query, chosen route, retrieved
+snippets (with every search attempt), final answer — so every run shows
+the agent's decisions and evidence before generation.
 """
 
 from __future__ import annotations
@@ -42,8 +42,20 @@ def run_query(graph: CompiledStateGraph, query: str) -> None:
     print(DIVIDER)
 
     result = graph.invoke({"query": query, "snippets": [], "report": ""})
+    route = result.get("route", "kb_query")
 
-    print("[2] RETRIEVED SNIPPETS  (Data Retriever Agent -> tool call)")
+    print(f"[2] ROUTE  (Router Agent) -> {route}")
+    if route == "direct":
+        print("    (small talk / meta question — knowledge base skipped)")
+        print(DIVIDER)
+        print("[3] FINAL ANSWER  (Direct Responder)")
+        for line in result["report"].splitlines():
+            print(f"    {line}")
+        print(BANNER)
+        return
+    print(DIVIDER)
+
+    print("[3] RETRIEVED SNIPPETS  (Data Retriever Agent -> tool call)")
     attempts = result.get("search_attempts", [])
     if attempts:
         # Every attempt before the last returned zero snippets by
@@ -60,7 +72,7 @@ def run_query(graph: CompiledStateGraph, query: str) -> None:
         print("    (none — no chunk cleared the relevance threshold)")
     print(DIVIDER)
 
-    print("[3] FINAL ANSWER  (Report Generator Agent)")
+    print("[4] FINAL ANSWER  (Report Generator Agent)")
     for line in result["report"].splitlines():
         print(f"    {line}")
     print(BANNER)

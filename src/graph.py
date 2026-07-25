@@ -1,12 +1,14 @@
 """LangGraph wiring for the agentic retrieval pipeline.
 
-Orchestration pattern: handoff through shared state with a bounded
-retry loop. The Data Retriever writes ``snippets`` into
-``PipelineState``; when snippets were found (or the attempt budget is
-spent) the state flows to the Report Generator, which writes the final
-``report``. When an attempt finds nothing, the Query Rewriter proposes
-a new search query and the retriever tries again — up to
-``MAX_SEARCH_ATTEMPTS`` total attempts.
+Orchestration pattern: handoff through shared state, with two agentic
+decision points. A Router first classifies the query — pure small talk
+is answered directly; anything informational takes the retrieval path.
+There, the Data Retriever writes ``snippets`` into ``PipelineState``;
+when snippets were found (or the attempt budget is spent) the state
+flows to the Report Generator, which writes the final ``report``. When
+an attempt finds nothing, the Query Rewriter proposes a new search
+query and the retriever tries again — up to ``MAX_SEARCH_ATTEMPTS``
+total attempts.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ from typing_extensions import NotRequired, TypedDict
 from src.agents.reporter import generator_node
 from src.agents.retriever import retriever_node
 from src.agents.rewriter import rewriter_node
+from src.agents.router import ROUTE_DIRECT, direct_responder_node, router_node
 from src.config import MAX_SEARCH_ATTEMPTS
 from src.retrievers import ScoredChunk
 
@@ -40,10 +43,22 @@ class PipelineState(TypedDict):
     search_query: NotRequired[str]  # query the retriever agent actually searched
     hits: NotRequired[list[ScoredChunk]]  # scored snippets (title/score/source) for UIs
 
-    # Retry-loop fields (written by retriever/rewriter, read by the router
-    # function below and by presentation layers).
+    # Agentic decision fields (written by router/retriever/rewriter, read
+    # by the edge functions below and by presentation layers).
+    route: NotRequired[str]                  # router verdict: kb_query | direct
     search_attempts: NotRequired[list[str]]  # every query tried, in order
     rewritten_query: NotRequired[str]        # rewriter's query for the next attempt
+
+
+def _after_routing(state: PipelineState) -> str:
+    """Send small talk to the direct responder; everything else retrieves.
+
+    The fail-safe default is retrieval: only an explicit ``direct``
+    verdict skips the knowledge base.
+    """
+    if state.get("route") == ROUTE_DIRECT:
+        return "direct_responder"
+    return "data_retriever"
 
 
 def _after_retrieval(state: PipelineState) -> str:
@@ -61,12 +76,19 @@ def _after_retrieval(state: PipelineState) -> str:
 
 
 def build_graph() -> CompiledStateGraph:
-    """Compile the pipeline: Data Retriever -> (retry loop) -> Generator."""
+    """Compile the pipeline: Router -> Retriever -> (retry loop) -> Generator."""
     builder = StateGraph(PipelineState)
+    builder.add_node("router", router_node)
+    builder.add_node("direct_responder", direct_responder_node)
     builder.add_node("data_retriever", retriever_node)
     builder.add_node("query_rewriter", rewriter_node)
     builder.add_node("report_generator", generator_node)
-    builder.add_edge(START, "data_retriever")
+    builder.add_edge(START, "router")
+    builder.add_conditional_edges(
+        "router",
+        _after_routing,
+        ["data_retriever", "direct_responder"],
+    )
     # <-- agentic handoff: found snippets travel to the generator via
     #     shared state; an empty attempt loops back through the rewriter
     #     until the MAX_SEARCH_ATTEMPTS budget is spent.
@@ -77,4 +99,5 @@ def build_graph() -> CompiledStateGraph:
     )
     builder.add_edge("query_rewriter", "data_retriever")
     builder.add_edge("report_generator", END)
+    builder.add_edge("direct_responder", END)
     return builder.compile()

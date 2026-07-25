@@ -103,6 +103,7 @@ _EXAMPLES = (
     ("Mileage claim", "How much can I claim when I use my own car for a client visit?"),
     ("Thai query", "ลาบวชได้กี่วัน และต้องแจ้งล่วงหน้าอย่างไร?"),
     ("Not in KB", "What is the CEO's salary?"),
+    ("Greeting", "Hello! What can you do?"),
 )
 
 # ------------------------------------------------------- cached core hooks ---
@@ -153,15 +154,25 @@ def _snippet_cards(hits) -> str:
 def _telemetry(run: dict) -> str:
     timings = run["timings"]
     total = sum(timings.values())
-    items = (
-        ("mode", run["mode"]),
-        ("model", run["model"]),
-        ("top-k", str(run["top_k"])),
-        ("snippets", str(len(run["snippets"]))),
-        ("stage 1 · retrieve", f"{timings.get('retrieval', 0):.2f}s"),
-        ("stage 2 · synthesize", f"{timings.get('synthesis', 0):.2f}s"),
-        ("total", f"{total:.2f}s"),
-    )
+    if run.get("route") == "direct":
+        items = (
+            ("route", "direct"),
+            ("model", run["model"]),
+            ("respond", f"{timings.get('synthesis', 0):.2f}s"),
+            ("total", f"{total:.2f}s"),
+        )
+    else:
+        items = (
+            ("route", run.get("route", "kb_query")),
+            ("mode", run["mode"]),
+            ("model", run["model"]),
+            ("top-k", str(run["top_k"])),
+            ("attempts", str(len(run.get("search_attempts") or []) or 1)),
+            ("snippets", str(len(run["snippets"]))),
+            ("stage 1 · retrieve", f"{timings.get('retrieval', 0):.2f}s"),
+            ("stage 2 · synthesize", f"{timings.get('synthesis', 0):.2f}s"),
+            ("total", f"{total:.2f}s"),
+        )
     spans = "".join(
         f'<div class="t"><span class="k">{k}</span><span class="v">{html.escape(v)}</span></div>'
         for k, v in items
@@ -173,6 +184,11 @@ def render_run(run: dict) -> None:
     """Display one completed pipeline run: telemetry, evidence, answer."""
     st.markdown(f'<p class="query-echo">“{html.escape(run["query"])}”</p>', unsafe_allow_html=True)
     st.markdown(_telemetry(run), unsafe_allow_html=True)
+
+    if run.get("route") == "direct":
+        _stage_head(1, "Direct Responder", "router verdict: small talk / meta — the knowledge base was never touched")
+        st.markdown(run["report"])
+        return
 
     _stage_head(1, "Data Retriever Agent", "forced tool call → ranked evidence from the knowledge base")
     attempts = run.get("search_attempts") or []
@@ -228,9 +244,10 @@ def execute(query: str, mode: str, top_k: int) -> dict | None:
     run = {
         "query": query, "mode": mode, "top_k": top_k, "model": MODEL_NAME,
         "snippets": [], "hits": [], "report": "", "search_query": query,
-        "search_attempts": [], "timings": {},
+        "route": "kb_query", "search_attempts": [], "timings": {},
     }
-    stage1 = st.status("**Stage 1 · Data Retriever** — choosing a search query and retrieving…", state="running")
+    stage_router = st.status("**Router** — does this query need the knowledge base?", state="running")
+    stage1 = None
     stage2 = None
     started = time.perf_counter()
     try:
@@ -241,7 +258,27 @@ def execute(query: str, mode: str, top_k: int) -> dict | None:
         ):
             # The retry loop may fire data_retriever / query_rewriter
             # several times; retrieval time accumulates across attempts.
-            if "data_retriever" in update:
+            if "router" in update:
+                run["timings"]["routing"] = time.perf_counter() - started
+                run.update(update["router"] or {})
+                started = time.perf_counter()
+                if run["route"] == "direct":
+                    stage_router.update(
+                        label="**Router** — direct: small talk, skipping the knowledge base",
+                        state="complete",
+                    )
+                else:
+                    stage_router.update(
+                        label="**Router** — kb_query: retrieval required",
+                        state="complete",
+                    )
+                    stage1 = st.status("**Stage 1 · Data Retriever** — choosing a search query and retrieving…", state="running")
+            elif "direct_responder" in update:
+                run["timings"]["synthesis"] = time.perf_counter() - started
+                run.update(update["direct_responder"] or {})
+            elif "data_retriever" in update:
+                if stage1 is None:
+                    stage1 = st.status("**Stage 1 · Data Retriever**", state="running")
                 run["timings"]["retrieval"] = (
                     run["timings"].get("retrieval", 0) + time.perf_counter() - started
                 )
@@ -284,7 +321,7 @@ def execute(query: str, mode: str, top_k: int) -> dict | None:
                     state="complete",
                 )
     except Exception as exc:  # noqa: BLE001 — surface any provider error readably
-        for status in (stage1, stage2):
+        for status in (stage_router, stage1, stage2):
             if status is not None:
                 status.update(state="error")
         st.error(f"**Pipeline failed** ({type(exc).__name__}): {str(exc)[:400]}")
@@ -316,9 +353,11 @@ with st.sidebar:
 
 st.markdown('<p class="app-title">Agentic RAG Explorer</p>', unsafe_allow_html=True)
 st.markdown(
-    '<p class="app-sub">Two-agent LangGraph pipeline over the Siam Innovate employee '
-    'handbook — a <b>Data Retriever</b> forced through a search tool, handing evidence '
-    'to a <b>Report Generator</b> that answers from that evidence only.</p>',
+    '<p class="app-sub">Agentic LangGraph pipeline over the Siam Innovate employee '
+    'handbook — a <b>Router</b> decides whether the knowledge base is needed, a '
+    '<b>Data Retriever</b> is forced through a search tool (rewriting the query and '
+    'retrying when a search comes back empty), and a <b>Report Generator</b> answers '
+    'from the retrieved evidence only.</p>',
     unsafe_allow_html=True,
 )
 

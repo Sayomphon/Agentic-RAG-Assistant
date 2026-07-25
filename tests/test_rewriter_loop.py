@@ -63,12 +63,17 @@ def _initial_state(query: str) -> dict[str, object]:
     return {"query": query, "snippets": [], "report": ""}
 
 
+@patch("src.agents.router.get_llm")
 @patch("src.agents.reporter.get_llm")
 @patch("src.agents.rewriter.get_llm")
 @patch("src.agents.retriever.search_scored")
 @patch("src.agents.retriever.get_llm")
 class RewriterLoopTests(unittest.TestCase):
-    """Exercise the compiled graph's retry loop end to end (LLM-free)."""
+    """Exercise the compiled graph's retry loop end to end (LLM-free).
+
+    The router LLM is faked to answer ``kb_query`` so every test enters
+    the retrieval path without a real API call.
+    """
 
     def test_first_attempt_hit_skips_rewriter(
         self,
@@ -76,7 +81,9 @@ class RewriterLoopTests(unittest.TestCase):
         mock_search: Mock,
         mock_rewriter_llm: Mock,
         mock_reporter_llm: Mock,
+        mock_router_llm: Mock,
     ) -> None:
+        mock_router_llm.return_value = _FakeToolLLM([{"args": {"route": "kb_query"}}])
         mock_retriever_llm.return_value = _FakeToolLLM(
             [{"args": {"query": "annual leave"}}]
         )
@@ -96,7 +103,9 @@ class RewriterLoopTests(unittest.TestCase):
         mock_search: Mock,
         mock_rewriter_llm: Mock,
         mock_reporter_llm: Mock,
+        mock_router_llm: Mock,
     ) -> None:
+        mock_router_llm.return_value = _FakeToolLLM([{"args": {"route": "kb_query"}}])
         mock_retriever_llm.return_value = _FakeToolLLM(
             [{"args": {"query": "quit my job"}}]
         )
@@ -129,7 +138,9 @@ class RewriterLoopTests(unittest.TestCase):
         mock_search: Mock,
         mock_rewriter_llm: Mock,
         mock_reporter_llm: Mock,
+        mock_router_llm: Mock,
     ) -> None:
+        mock_router_llm.return_value = _FakeToolLLM([{"args": {"route": "kb_query"}}])
         mock_retriever_llm.return_value = _FakeToolLLM(
             [{"args": {"query": "executive compensation"}}]
         )
@@ -152,6 +163,7 @@ class RewriterLoopTests(unittest.TestCase):
         mock_search: Mock,
         mock_rewriter_llm: Mock,
         mock_reporter_llm: Mock,
+        mock_router_llm: Mock,
     ) -> None:
         # English user query would normally make _select_search_query copy
         # the user's wording — the rewritten query must win instead, with
