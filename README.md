@@ -194,6 +194,29 @@ at **100%** *and* semantic at **67%**, so its overall hit rate (**85%**) beats
 either side alone. Full tables and every imperfect case are in
 [evaluation_results.md](evaluation_results.md).
 
+### Answer-level evaluation
+
+`python -m src.evaluation.run_answer_eval` scores the **final generated
+answers** (not just retrieval) on four axes — two deterministic, two
+LLM-as-judge. The judge sees only (query, snippets, answer), never a golden
+answer, so no reference answers are maintained; the deterministic axes use no
+LLM at all, so the two guarantees that matter most (citations point at real
+evidence; negatives stay not-found) are immune to judge bias. Numbers from the
+run of **2026-07-25** (hybrid mode, 17 questions):
+
+| axis | method | result | threshold |
+|---|---|---|---|
+| citation validity | deterministic | **100%** — every `[Title]` cited names a section actually handed to the generator | 100% |
+| negative discipline | deterministic | **100%** — both negative queries returned the not-found sentence byte-exactly | 100% |
+| faithfulness | LLM judge | **0.985** — answers decomposed into claims, each checked against the snippets | ≥ 0.9 |
+| answer relevance | LLM judge | **5.00** avg (1–5) | ≥ 4.0 |
+
+Per-question detail and every judge-rejected claim (shown raw, not hidden) are
+in [answer_eval_results.md](answer_eval_results.md). Limitations: the judge is
+a single LLM (no ensemble), n is small, and judged axes inherit the judge's
+strictness — e.g. both "unsupported claims" in the current run are framing
+sentences ("Below is a checklist…"), not factual fabrications.
+
 ## Design Decisions
 
 **Why LangGraph + sequential handoff.** The assignment's core is orchestration,
