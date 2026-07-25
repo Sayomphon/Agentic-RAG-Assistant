@@ -72,6 +72,7 @@ details.snip summary::after { content:"+"; font-family:var(--mono); color:var(--
 details.snip[open] summary::after { content:"−"; }
 .snip-rank { font-family:var(--mono); font-size:.72rem; color:var(--faint); }
 .snip-title { font-size:.9rem; font-weight:550; }
+.snip-file { font-family:var(--mono); font-size:.68rem; color:var(--faint); }
 .snip-score { margin-left:auto; font-family:var(--mono); font-size:.72rem; color:var(--muted); }
 .badge { font-family:var(--mono); font-size:.62rem; font-weight:600; letter-spacing:.03em; color:var(--muted); }
 .badge-both { font-weight:700; color:inherit; }
@@ -140,10 +141,17 @@ def _badge(source: str) -> str:
 def _snippet_cards(hits) -> str:
     cards = []
     for rank, hit in enumerate(hits, start=1):
+        source_file = getattr(hit, "source_file", "")
+        file_tag = (
+            f'<span class="snip-file">{html.escape(source_file)}</span>'
+            if source_file
+            else ""
+        )
         cards.append(
             f'<details class="snip"{" open" if rank == 1 else ""}>'
             f'<summary><span class="snip-rank">{rank:02d}</span>'
             f'<span class="snip-title">{html.escape(hit.title)}</span>'
+            f"{file_tag}"
             f"{_badge(hit.source)}"
             f'<span class="snip-score">score {hit.score:.4f}</span></summary>'
             f"<pre>{html.escape(hit.text)}</pre></details>"

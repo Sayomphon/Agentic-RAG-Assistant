@@ -24,12 +24,17 @@ class Chunk:
     Attributes:
         title: Section title taken from the ``--- Title ---`` delimiter.
         text: Body text of the section.
-        index: Position of the section within the source file.
+        index: Global position of the section across the whole corpus —
+            unique over every source file (hybrid fusion uses it as its
+            dedup key), assigned in sorted-filename ingestion order.
+        source_file: Name of the file the section came from (provenance
+            for UI layers; empty for ad-hoc chunks built in tests).
     """
 
     title: str
     text: str
     index: int = 0
+    source_file: str = ""
 
     def as_snippet(self) -> str:
         """Render the chunk as a self-describing snippet string."""
@@ -59,6 +64,11 @@ class ScoredChunk:
         """Section body (pass-through convenience)."""
         return self.chunk.text
 
+    @property
+    def source_file(self) -> str:
+        """Originating knowledge-base file (pass-through convenience)."""
+        return self.chunk.source_file
+
     def as_snippet(self) -> str:
         """Render the underlying chunk; metadata is deliberately excluded so
         the agent-facing snippet format stays identical across retrievers."""
@@ -81,33 +91,58 @@ def load_chunks(path: str = KB_PATH) -> list[Chunk]:
     touching any ranking code.
 
     Args:
-        path: Path to the knowledge base text file.
+        path: Knowledge-base location — either a directory of ``.txt``
+            files (ingested in sorted-filename order, so chunk indexes
+            and the embedding-cache fingerprint stay deterministic) or a
+            single text file.
 
     Returns:
-        All sections in file order.
+        All sections, with a corpus-wide running ``index``.
 
     Raises:
-        FileNotFoundError: If the knowledge base file does not exist.
-        ValueError: If the file contains no ``--- Title ---`` sections.
+        FileNotFoundError: If the path (or a directory's ``*.txt``
+            contents) does not exist.
+        ValueError: If no file contains a ``--- Title ---`` section.
     """
-    kb_file = Path(path)
-    if not kb_file.is_file():
+    kb_path = Path(path)
+    if kb_path.is_dir():
+        kb_files = sorted(kb_path.glob("*.txt"))
+        if not kb_files:
+            raise FileNotFoundError(
+                f"Knowledge-base directory '{kb_path.resolve()}' contains "
+                "no .txt files. Set KB_PATH in .env or src/config.py to a "
+                "directory of knowledge files or a single text file."
+            )
+    elif kb_path.is_file():
+        kb_files = [kb_path]
+    else:
         raise FileNotFoundError(
-            f"Knowledge base not found at '{kb_file.resolve()}'. "
-            "Set KB_PATH in .env or src/config.py to the correct location."
+            f"Knowledge base not found at '{kb_path.resolve()}'. "
+            "Set KB_PATH in .env or src/config.py to a directory of "
+            "knowledge files or a single text file."
         )
-    raw = kb_file.read_text(encoding="utf-8")
-    # re.split with one capture group yields [preamble, title1, body1, ...].
-    parts = _SECTION_PATTERN.split(raw)
-    titles, bodies = parts[1::2], parts[2::2]
-    chunks = [
-        Chunk(title=t.strip(), text=b.strip(), index=i)
-        for i, (t, b) in enumerate(zip(titles, bodies))
-        if b.strip()
-    ]
+
+    chunks: list[Chunk] = []
+    for kb_file in kb_files:
+        raw = kb_file.read_text(encoding="utf-8")
+        # re.split with one capture group yields [preamble, title1, body1, ...].
+        parts = _SECTION_PATTERN.split(raw)
+        for title, body in zip(parts[1::2], parts[2::2]):
+            if not body.strip():
+                continue
+            # len(chunks) keeps the index a corpus-wide running number —
+            # it must never repeat across files (hybrid fusion dedup key).
+            chunks.append(
+                Chunk(
+                    title=title.strip(),
+                    text=body.strip(),
+                    index=len(chunks),
+                    source_file=kb_file.name,
+                )
+            )
     if not chunks:
         raise ValueError(
-            f"'{kb_file}' contains no '--- Section Title ---' sections; "
+            f"No '--- Section Title ---' sections found in {kb_path}; "
             "check the file format."
         )
     return chunks

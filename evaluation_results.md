@@ -1,6 +1,6 @@
 # Retrieval Evaluation Results
 
-- Run date: 2026-07-25 13:22
+- Run date: 2026-07-25 15:20
 - Test set: 15 queries (src/evaluation/testset.py)
 - Config: TOP_K=4, MIN_SCORE=2.0, MIN_COSINE=0.38, EMBEDDING_MODEL=text-embedding-3-small, FUSION_METHOD=rrf, RRF_K=60
 
@@ -9,8 +9,8 @@
 | mode     | hit_rate@k | recall@k | MRR   | FP_rate(neg) | avg_latency |
 |----------|------------|----------|-------|--------------|-------------|
 | keyword  | 62%        | 54%      | 0.558 | 0%           | 0.1 ms      |
-| semantic | 77%        | 71%      | 0.718 | 0%           | 431.4 ms    |
-| hybrid   | 85%        | 77%      | 0.808 | 0%           | 429.4 ms    |
+| semantic | 77%        | 71%      | 0.718 | 0%           | 495.1 ms    |
+| hybrid   | 85%        | 77%      | 0.808 | 0%           | 485.4 ms    |
 
 ## Per category
 

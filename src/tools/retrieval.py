@@ -1,4 +1,4 @@
-"""RAG retrieval tool: ranked search over knowledge_base.txt.
+"""RAG retrieval tool: ranked search over the knowledge base.
 
 This module is the boundary between agents and retrieval. Agents import
 exactly two names from here — ``search_knowledge_base`` (the tool) and
