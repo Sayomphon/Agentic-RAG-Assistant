@@ -1,0 +1,244 @@
+--- International Travel Approval Process ---
+Employees traveling internationally for business must obtain written approval
+from their department head at least 14 days before departure. All requests are
+submitted through the TravelHub system under "Overseas Trip Request" and must
+include a trip purpose statement, an itinerary, and a cost estimate. Trips
+longer than 10 business days additionally require sign-off from the Managing
+Director. Once approved, the Travel Desk books economy-class airfare through
+the company's contracted agency, ThaiOrbit Travel. Self-booked flights are not
+reimbursable unless the Travel Desk confirms in writing that no contracted
+option was available. Visa fees and airport transfers are arranged by the
+Travel Desk and charged directly to the department's cost center.
+
+--- International Travel Daily Allowance ---
+For approved international business trips, Siam Innovate provides a daily
+allowance of 2,400 THB to cover meals and incidental expenses. The allowance
+is paid per full calendar day abroad; departure and return days are paid at
+half rate (1,200 THB). Hotel accommodation is booked by the Travel Desk with
+a cap of 5,500 THB per night in Southeast Asia and 8,000 THB per night
+elsewhere. No receipts are required for the daily allowance itself, but hotel
+and ground transport receipts must be uploaded to ExpenseFlow within 45 days
+of the return date. Allowances are deposited together with the following
+month's payroll.
+
+--- International Travel Insurance ---
+All international business trips are automatically covered by the company's
+group travel insurance, the SafeJourney Plan B underwritten by Bangkok
+Assurance PCL. Coverage includes emergency medical treatment up to
+3,000,000 THB, emergency evacuation, and lost-luggage compensation up to
+40,000 THB per trip. Employees must carry the digital insurance card, which
+is available in the HR mobile app (SiamPeople) under "My Benefits". Claims
+must be filed through the SafeJourney portal within 30 days of returning,
+together with original receipts and a copy of the trip approval from
+TravelHub. Personal side-trips extending a business trip are not covered
+beyond 48 hours after the last business day.
+
+--- Remote Work Policy ---
+Employees may work remotely up to 3 days per week with manager approval.
+Remote work requests are submitted through the FlexWork portal by Thursday
+of the preceding week. Approval is at the manager's discretion and may be
+withdrawn if collaboration or performance suffers. Remote employees must be
+reachable on Microsoft Teams during their agreed working hours and must use
+the TigerLink VPN when accessing internal systems. New hires in their first
+30 calendar days are expected to work fully on-site to support onboarding.
+Working remotely from outside Thailand for more than 5 consecutive business
+days requires prior written approval from both HR and the Legal team.
+
+--- Hybrid Work Guidelines ---
+Siam Innovate operates a hybrid model: staff can work off-site up to 3 days
+each week, subject to manager approval requested via the FlexWork portal no
+later than Thursday of the week before. In addition, all employees observe
+core collaboration hours from 10:00 to 16:00 (Bangkok time), during which
+they must be available for meetings regardless of location. Tuesdays are
+designated company-wide anchor days, when all teams work from the Rama IX
+headquarters. Teams may define one additional anchor day of their own. Desk
+booking for office days is done through the SpaceLy app at least one day in
+advance.
+
+--- Annual Leave ---
+Full-time employees receive 15 days of paid annual leave per calendar year,
+accrued at 1.25 days per month. After five full years of service, the
+entitlement increases to 20 days. Up to 5 unused days may be carried over
+into the first quarter of the following year; carried-over days expire on
+31 March. Leave requests are submitted in the LeaveDesk system at least
+3 business days in advance for absences of 3 days or fewer, and at least
+14 days in advance for longer absences. Managers must approve or decline
+requests within 2 business days. Unused leave beyond the carry-over limit
+is forfeited without compensation.
+
+--- Sick Leave ---
+Employees are entitled to paid sick leave of up to 30 working days per year,
+in line with Thai labor law. Absences of 3 or more consecutive working days
+require a medical certificate from a licensed physician, uploaded to
+LeaveDesk within 5 days of returning to work. For same-day sick notice,
+employees must inform their manager via Teams or phone before 10:00. Sick
+leave cannot be converted to cash or carried over. Employees who exhaust
+their sick leave entitlement may apply for unpaid medical leave, which
+requires HR approval and, for absences beyond 30 additional days, an
+assessment by the company's occupational health partner, MediTrust Clinic.
+
+--- Parental Leave ---
+Pregnant employees are entitled to 98 days of maternity leave per pregnancy,
+of which 45 days are paid at full salary by the company and the remainder
+covered under Social Security rules. Fathers employed by Siam Innovate
+receive 15 working days of paid paternity leave, to be used within 90 days
+of the child's birth. Employees adopting a child under age 7 receive 30
+calendar days of paid adoption leave. All parental leave is coordinated
+through HR at least 30 days before the expected start date where possible,
+and recorded in LeaveDesk under the "Family" category. Returning parents may
+request a temporary 4-day work week for up to 6 months, subject to manager
+approval.
+
+--- Expense Reimbursement ---
+Business expenses are reimbursed through the ExpenseFlow system. Employees
+must submit claims with scanned receipts within 45 days of the expense date;
+late claims are rejected automatically unless the CFO grants an exception.
+Claims under 20,000 THB are approved by the line manager; claims of
+20,000 THB or more also require Finance approval. Approved amounts are paid
+with the next payroll run. Non-reimbursable items include alcohol (except
+approved client entertainment), traffic fines, minibar charges, and personal
+subscriptions. Client entertainment above 5,000 THB per event requires
+pre-approval from the department head. Mileage for personal-car business
+trips is reimbursed at 6 THB per kilometer.
+
+--- Corporate Credit Card ---
+Employees at manager level and above may apply for a KrungSiam Platinum
+corporate credit card through the Finance Service Desk. The standard monthly
+limit is 150,000 THB; temporary increases for approved events or business
+trips can be requested via ExpenseFlow at least 5 business days in advance.
+Cardholders must reconcile all transactions in ExpenseFlow within 45 days,
+attaching itemized receipts — the same deadline that applies to out-of-pocket
+claims. Personal use of the corporate card is strictly prohibited and leads
+to card cancellation on the second violation. Lost or stolen cards must be
+reported to KrungSiam Bank's 24-hour hotline and the Finance Service Desk
+within 24 hours.
+
+--- IT Security and Password Policy ---
+All company accounts must use passwords of at least 16 characters generated
+and stored in the company password manager, ShieldPass. Multi-factor
+authentication via the OktaSiam app is mandatory for email, ExpenseFlow,
+and all production systems. Sharing credentials is a disciplinary offense.
+Phishing simulations are run monthly by the Security team; employees who
+fail three simulations in a rolling 12-month period must retake the
+SecureBase awareness course. Suspected security incidents must be reported
+to soc@siaminnovate.example within 1 hour of discovery. USB storage devices
+are blocked by default on all company laptops and require a time-limited
+exemption approved by the CISO.
+
+--- VPN Usage ---
+Access to internal systems from outside the office network requires the
+TigerLink VPN client, installed by IT on all company devices. Employees sign
+in with their ShieldPass-managed credentials plus OktaSiam multi-factor
+authentication. The VPN session limit is 12 hours, after which
+re-authentication is required. Split tunneling is disabled; all traffic
+routes through the corporate gateway while connected. Personal devices may
+not connect to TigerLink except under the BYOD program, which requires
+device enrollment in the MobiGuard management platform and annual security
+attestation. VPN connection issues are reported to the IT Service Desk via
+the HelpHub portal, with a target response time of 4 business hours.
+
+--- Onboarding Process ---
+New employees join through the LaunchPad onboarding program. Before day one,
+IT ships a configured laptop and HR sends a welcome pack through the
+SiamPeople app. The first week includes orientation sessions on company
+values, security (the SecureBase course must be completed within 7 days),
+and tooling. Every new hire is paired with a LaunchPad buddy — a colleague
+outside their direct team — for the first 60 days. Managers must schedule a
+30-60-90 day check-in series in GrowthCompass. New hires work fully on-site
+for their first 30 calendar days, after which standard hybrid rules apply.
+Building access cards are issued by Facilities on day one at the Rama IX
+reception.
+
+--- Probation Period ---
+All new employees serve a probation period of 119 days from their start
+date. During probation, either party may terminate employment with 7 days'
+written notice. A mid-probation review is held around day 60, and the final
+confirmation review must be completed in GrowthCompass no later than day
+105, so HR can process the outcome before the legal deadline. Probationary
+employees accrue annual leave normally but may only take it after day 60,
+except with special manager approval. Successful confirmation unlocks
+benefits enrollment in the VitalCare Gold health plan and the provident
+fund, both effective from the first day of the month following confirmation.
+
+--- Performance Review Cycle ---
+Performance is reviewed twice a year in GrowthCompass: a mid-year review in
+June and a full-year review in December. Each cycle includes a self-review,
+peer feedback from at least 2 colleagues, and a manager assessment against
+the goals agreed at the start of the year. Ratings use a 4-point scale:
+Exceptional, Strong, Developing, and Off-Track. Employees rated Off-Track
+enter a 60-day performance improvement plan with biweekly check-ins. Salary
+adjustments and bonus decisions follow the December cycle and take effect
+with the February payroll. Promotion cases are prepared by managers and
+reviewed by the cross-functional Talent Council, which meets each January
+and July.
+
+--- Training Budget ---
+Each employee has an individual learning budget of 25,000 THB per calendar
+year, managed through the SkillForge platform. The budget covers courses,
+certifications, conferences, and professional books. Single items above
+15,000 THB require manager approval in SkillForge before purchase.
+Certification exam fees are covered in full and do not draw down the
+personal budget if the certification appears on the company's Priority
+Skills List, published each January by the L&D team. Unused budget does not
+roll over. Employees who resign within 6 months of completing a
+company-funded certification costing more than 20,000 THB must repay 50% of
+the cost, as set out in the training agreement signed at enrollment.
+
+--- Equipment and Laptop Policy ---
+New employees choose between a MacBook Air and a Lenovo ThinkPad X1 as their
+standard machine; engineering roles may request a higher-spec build via the
+HelpHub portal. Laptops are refreshed every 3 years, and the old device must
+be returned to IT for certified data wiping. Employees receive a one-time
+home-office allowance of 12,000 THB, claimable through ExpenseFlow within
+the first 90 days of employment, covering a monitor, chair, or desk
+accessories. All devices are enrolled in the MobiGuard management platform
+and must not be altered or jailbroken. Damaged or lost equipment must be
+reported to the IT Service Desk within 24 hours; negligent loss may result
+in a cost-sharing charge of up to 20% of replacement value.
+
+--- Overtime Policy ---
+Non-exempt employees who work beyond standard hours with prior manager
+approval are compensated per Thai labor law: 1.5x the hourly rate on
+workdays, 2x for work on weekly holidays, and 3x for overtime on public
+holidays. Overtime must be requested and approved in the TimeTrack system
+before the work is performed; retroactive claims are accepted only for
+documented production emergencies. Exempt employees (manager level and
+above) are not eligible for overtime pay but may claim compensatory time
+off for weekend releases, capped at 6 days per year. Sustained overtime
+above 24 hours per month triggers a workload review between the manager
+and HR Business Partner.
+
+--- Resignation Process ---
+Employees who wish to resign must give at least 30 days' written notice,
+submitted through SiamPeople with a signed resignation letter. The final
+working date is confirmed by HR after checking outstanding leave and
+project handover plans. Departing employees complete a handover document
+approved by their manager, return all equipment and access cards to IT and
+Facilities, and attend an exit interview with the HR Business Partner in
+the final week. Unused annual leave within the statutory entitlement is
+paid out with the final salary. Access to all systems, including SiamPeople
+and ExpenseFlow, is revoked at 18:00 on the last working day; pending
+expense claims must be submitted before then.
+
+--- Company Holidays ---
+Siam Innovate observes 16 paid public holidays per year, published each
+November for the following year on the SiamPeople app. The list always
+includes New Year's Day, Songkran (13-15 April), Labour Day, and His
+Majesty the King's Birthday. When a public holiday falls on a weekend, a
+substitute day off is granted on the next working day. The office closes
+early at 15:00 on the last working day before New Year and before Songkran.
+Employees required to work on a public holiday due to production duty
+receive holiday overtime rates per the Overtime Policy plus a substitute
+day off to be used within 60 days.
+
+--- Health Benefits ---
+After probation confirmation, employees are enrolled in the VitalCare Gold
+group health plan administered by Bangkok Assurance PCL. The plan covers
+outpatient care up to 2,500 THB per visit (maximum 30 visits per year),
+inpatient hospitalization up to 500,000 THB per condition, and annual dental
+care up to 8,000 THB. An annual health checkup at BCH Wellness Center is
+provided every January at no cost. Employees may add a spouse and up to
+3 children to the plan at a subsidized premium of 4,200 THB per dependent
+per year, deducted from payroll. Claims are submitted through the VitalCare
+mobile app; cashless service is available at network hospitals listed in
+the SiamPeople benefits page.
