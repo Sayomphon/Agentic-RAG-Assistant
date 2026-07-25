@@ -17,6 +17,7 @@ from unittest.mock import Mock, patch
 from src.agents.router import ROUTE_DIRECT, ROUTE_KB, router_node
 from src.graph import build_graph
 from src.retrievers.base import Chunk, ScoredChunk
+from src.tools.retrieval import search_knowledge_base
 
 
 class _FakeBoundLLM:
@@ -88,7 +89,7 @@ class RouterNodeTests(unittest.TestCase):
 
 @patch("src.agents.reporter.get_llm")
 @patch("src.agents.router.get_llm")
-@patch("src.agents.retriever.search_scored")
+@patch("src.tools.retrieval.search_scored")
 @patch("src.agents.retriever.get_llm")
 class RouterGraphTests(unittest.TestCase):
     """Route wiring through the compiled graph."""
@@ -121,7 +122,12 @@ class RouterGraphTests(unittest.TestCase):
     ) -> None:
         mock_router_llm.return_value = _FakeRouterLLM(ROUTE_KB)
         mock_retriever_llm.return_value = _FakeToolLLM(
-            [{"args": {"query": "international travel policy"}}]
+            [
+                {
+                    "name": search_knowledge_base.name,
+                    "args": {"query": "international travel policy"},
+                }
+            ]
         )
         mock_search.return_value = [
             ScoredChunk(

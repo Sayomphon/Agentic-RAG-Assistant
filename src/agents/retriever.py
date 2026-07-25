@@ -2,7 +2,9 @@
 
 The guardrail here is two-layered:
     1. Structural — ``tool_choice="required"`` forces a tool call, so the
-       model *cannot* answer from its own knowledge.
+       model *cannot* answer from its own knowledge, and the call is then
+       dispatched to the bound ``search_knowledge_base`` tool itself: the
+       node has no second retrieval path it could take instead.
     2. Prompt — the system prompt forbids answering or rewriting.
 Structural enforcement is what makes the guarantee reliable; the prompt
 reinforces intent and guides query reformulation.
@@ -16,11 +18,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents import get_llm
 from src.config import TOP_K
-from src.tools.retrieval import (
-    has_english_search_terms,
-    search_knowledge_base,
-    search_scored,
-)
+from src.tools.retrieval import has_english_search_terms, search_knowledge_base
 
 if TYPE_CHECKING:
     from src.graph import PipelineState
@@ -50,6 +48,20 @@ def _select_search_query(user_query: str, tool_args: dict[str, object]) -> str:
         return user_query
     translated_query = str(tool_args.get("query", "")).strip()
     return translated_query or user_query
+
+
+def _no_evidence(state: PipelineState, attempts: list[str]) -> dict[str, object]:
+    """Fail closed on an unusable tool call, still recording the attempt.
+
+    The retry loop exits on the attempt bound, so the count must grow on
+    every pass — including the ones that never reached the tool.
+    """
+    return {
+        "snippets": [],
+        "hits": [],
+        "search_attempts": [*attempts, state["query"]],
+        "rewritten_query": "",
+    }
 
 
 def retriever_node(state: PipelineState) -> dict[str, object]:
@@ -91,28 +103,27 @@ def retriever_node(state: PipelineState) -> dict[str, object]:
             ]
         )
         if not ai_msg.tool_calls:
-            # Fail closed, but still record the attempt: the retry loop
-            # exits on the attempt bound, so the count must always grow.
-            return {
-                "snippets": [],
-                "hits": [],
-                "search_attempts": [*attempts, state["query"]],
-                "rewritten_query": "",
-            }
-        search_query = _select_search_query(
-            state["query"],
-            ai_msg.tool_calls[0]["args"],
-        )
+            return _no_evidence(state, attempts)
+        # Only the first call runs, and only if it names the bound tool —
+        # an unknown name is a provider anomaly, not a licence to guess.
+        tool_call = ai_msg.tool_calls[0]
+        if tool_call.get("name") != search_knowledge_base.name:
+            return _no_evidence(state, attempts)
+        search_query = _select_search_query(state["query"], tool_call["args"])
 
-    # Execute one search only, through the same ranking path the tool
-    # wraps (``search_scored`` keeps the score/source metadata that the
-    # string-only tool output drops). The extra slice keeps the output
-    # bound deterministic even if a lower layer misbehaves.
+    # Execute the bound tool itself — exactly once per attempt, on every
+    # path (first attempt and rewritten retries alike), so the tool is the
+    # node's only route to the knowledge base. ``top_k``/``mode`` are
+    # injected from trusted state, never from the model's arguments; the
+    # extra slice keeps the output bound deterministic even if a lower
+    # layer misbehaves.
     top_k = state.get("top_k") or TOP_K
-    hits = search_scored(
-        search_query,
-        top_k=top_k,
-        mode=state.get("search_mode"),
+    hits = search_knowledge_base.invoke(
+        {
+            "query": search_query,
+            "top_k": top_k,
+            "mode": state.get("search_mode"),
+        }
     )[:top_k]
     return {
         "snippets": [hit.as_snippet() for hit in hits],

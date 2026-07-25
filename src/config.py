@@ -17,9 +17,11 @@ load_dotenv()
 MODEL_NAME: str = os.getenv("MODEL_NAME", "gpt-5-mini")
 TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0"))
 
-# Knowledge base / retrieval — KB_PATH may point at a directory of .txt
-# files (ingested in sorted-filename order) or a single text file.
-KB_PATH: str = os.getenv("KB_PATH", "data")
+# Knowledge base / retrieval — the assignment's required artifact is the
+# single `knowledge_base.txt` at the repository root, so that is the default.
+# KB_PATH may also point at a directory of .txt files (ingested in
+# sorted-filename order) when a corpus is split across domains.
+KB_PATH: str = os.getenv("KB_PATH", "knowledge_base.txt")
 TOP_K: int = int(os.getenv("TOP_K", "4"))
 # BM25 is only the ranking layer. A minimum matched-term gate in the retriever
 # rejects documents that score from one incidental word in a longer query.

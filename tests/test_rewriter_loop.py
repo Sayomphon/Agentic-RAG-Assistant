@@ -16,6 +16,12 @@ from src.agents.retriever import retriever_node
 from src.config import MAX_SEARCH_ATTEMPTS
 from src.graph import build_graph
 from src.retrievers.base import Chunk, ScoredChunk
+from src.tools.retrieval import search_knowledge_base
+
+
+def _search_call(query: str) -> dict[str, object]:
+    """A retrieval tool call shaped the way LangChain hands them back."""
+    return {"name": search_knowledge_base.name, "args": {"query": query}}
 
 
 def _fake_hits(count: int) -> list[ScoredChunk]:
@@ -66,7 +72,7 @@ def _initial_state(query: str) -> dict[str, object]:
 @patch("src.agents.router.get_llm")
 @patch("src.agents.reporter.get_llm")
 @patch("src.agents.rewriter.get_llm")
-@patch("src.agents.retriever.search_scored")
+@patch("src.tools.retrieval.search_scored")
 @patch("src.agents.retriever.get_llm")
 class RewriterLoopTests(unittest.TestCase):
     """Exercise the compiled graph's retry loop end to end (LLM-free).
@@ -84,9 +90,7 @@ class RewriterLoopTests(unittest.TestCase):
         mock_router_llm: Mock,
     ) -> None:
         mock_router_llm.return_value = _FakeToolLLM([{"args": {"route": "kb_query"}}])
-        mock_retriever_llm.return_value = _FakeToolLLM(
-            [{"args": {"query": "annual leave"}}]
-        )
+        mock_retriever_llm.return_value = _FakeToolLLM([_search_call("annual leave")])
         mock_search.return_value = _fake_hits(2)
         mock_reporter_llm.return_value = _FakeChatLLM("grounded answer")
 
@@ -106,9 +110,7 @@ class RewriterLoopTests(unittest.TestCase):
         mock_router_llm: Mock,
     ) -> None:
         mock_router_llm.return_value = _FakeToolLLM([{"args": {"route": "kb_query"}}])
-        mock_retriever_llm.return_value = _FakeToolLLM(
-            [{"args": {"query": "quit my job"}}]
-        )
+        mock_retriever_llm.return_value = _FakeToolLLM([_search_call("quit my job")])
         mock_rewriter_llm.return_value = _FakeToolLLM(
             [{"args": {"query": "resignation notice period process"}}]
         )
@@ -142,7 +144,7 @@ class RewriterLoopTests(unittest.TestCase):
     ) -> None:
         mock_router_llm.return_value = _FakeToolLLM([{"args": {"route": "kb_query"}}])
         mock_retriever_llm.return_value = _FakeToolLLM(
-            [{"args": {"query": "executive compensation"}}]
+            [_search_call("executive compensation")]
         )
         mock_rewriter_llm.return_value = _FakeToolLLM(
             [{"args": {"query": "CEO pay disclosure"}}]

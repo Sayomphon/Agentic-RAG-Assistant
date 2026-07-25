@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import unittest
 
-from src.config import TOP_K
+from src.config import KB_PATH, TOP_K
 from src.evaluation.regression import evaluate
 from src.retrievers import get_retriever
+from src.retrievers.base import ScoredChunk, load_chunks
 from src.tools.retrieval import search_knowledge_base
 
 
@@ -34,10 +35,20 @@ class RetrievalEvaluationTests(unittest.TestCase):
         self.assertEqual(get_retriever().search("annual leave", top_k=0), [])
 
     def test_tool_enforces_configured_top_k(self) -> None:
-        snippets = search_knowledge_base.invoke(
+        hits = search_knowledge_base.invoke(
             {"query": "international travel approval allowance insurance"}
         )
-        self.assertLessEqual(len(snippets), TOP_K)
+        self.assertLessEqual(len(hits), TOP_K)
+        self.assertTrue(all(isinstance(hit, ScoredChunk) for hit in hits))
+
+    def test_tool_reads_the_required_knowledge_base_file(self) -> None:
+        """The assignment's artifact is the default runtime source."""
+        self.assertEqual(KB_PATH, "knowledge_base.txt")
+        chunks = load_chunks()
+        self.assertGreater(len(chunks), 1)
+        self.assertEqual(
+            {chunk.source_file for chunk in chunks}, {"knowledge_base.txt"}
+        )
 
 
 if __name__ == "__main__":

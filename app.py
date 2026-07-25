@@ -139,9 +139,13 @@ def _badge(source: str) -> str:
 
 
 def _snippet_cards(hits) -> str:
+    # Provenance only earns its space when the corpus spans several files
+    # (KB_PATH pointing at a directory); against the default single
+    # knowledge_base.txt every badge would repeat the same filename.
+    show_source_files = len({getattr(hit, "source_file", "") for hit in hits}) > 1
     cards = []
     for rank, hit in enumerate(hits, start=1):
-        source_file = getattr(hit, "source_file", "")
+        source_file = getattr(hit, "source_file", "") if show_source_files else ""
         file_tag = (
             f'<span class="snip-file">{html.escape(source_file)}</span>'
             if source_file

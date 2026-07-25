@@ -37,6 +37,25 @@ class EmbeddingIndexError(RuntimeError):
     """Raised when the embedding index cannot be built (no key, API down)."""
 
 
+def _build_client() -> OpenAI:
+    """Construct the OpenAI client inside the index-build error boundary.
+
+    ``OpenAI()`` raises ``OpenAIError`` when no credential is configured.
+    Uncaught, that escapes the factory's ``EmbeddingIndexError`` handler
+    and crashes a semantic/hybrid run with a provider traceback instead of
+    degrading to keyword mode — so the constructor is translated here, the
+    same way an index-build failure is.
+    """
+    try:
+        return OpenAI()
+    except OpenAIError as exc:
+        raise EmbeddingIndexError(
+            f"Could not initialize the embeddings client: {exc} "
+            "Check OPENAI_API_KEY and network access, or set "
+            "SEARCH_MODE=keyword."
+        ) from exc
+
+
 class OpenAIEmbeddingRetriever:
     """Semantic retriever: cosine similarity over ``text-embedding-3-small``.
 
@@ -69,7 +88,9 @@ class OpenAIEmbeddingRetriever:
                 the same BM25 evidence twice during fusion.
 
         Raises:
-            EmbeddingIndexError: If no cache exists and the API call fails.
+            EmbeddingIndexError: If the client cannot be constructed (no
+                credential configured), or if no cache exists and the API
+                call fails.
         """
         self._chunks = chunks
         self._min_cosine = min_cosine
@@ -78,7 +99,7 @@ class OpenAIEmbeddingRetriever:
         # One client per retriever: reuses the HTTPS connection across
         # query embeddings — a fresh client per call would pay the TLS
         # handshake (~hundreds of ms) on every single query.
-        self._client = OpenAI()
+        self._client = _build_client()
         self.last_index_tokens: int | None = None  # filled on a cache miss
 
         # Content-addressed cache key: any change to the KB text (or the

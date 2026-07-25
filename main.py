@@ -7,6 +7,9 @@ Usage:
 Prints clearly separated stages — user query, chosen route, retrieved
 snippets (with every search attempt), final answer — so every run shows
 the agent's decisions and evidence before generation.
+
+Provider failures are reported as one actionable line and a non-zero exit
+code, never a traceback; set ``AGENTIC_RAG_DEBUG=1`` to re-raise instead.
 """
 
 from __future__ import annotations
@@ -16,6 +19,14 @@ import sys
 
 from dotenv import load_dotenv
 from langgraph.graph.state import CompiledStateGraph
+from openai import (
+    APIConnectionError,
+    APIStatusError,
+    APITimeoutError,
+    AuthenticationError,
+    OpenAIError,
+    RateLimitError,
+)
 
 from src.graph import build_graph
 
@@ -34,14 +45,58 @@ def require_api_key() -> None:
         )
 
 
-def run_query(graph: CompiledStateGraph, query: str) -> None:
-    """Run one query through the pipeline and print the three-stage output."""
+def provider_error_message(exc: OpenAIError) -> str:
+    """One actionable line per failure mode.
+
+    The text is written here rather than interpolated from the exception:
+    a provider error's string form carries request metadata (and can echo
+    the prompt), none of which belongs on a user's terminal. Only the
+    status code and request id are passed through — the two fields the
+    provider's own support flow asks for.
+    """
+    if isinstance(exc, AuthenticationError):
+        return (
+            "The provider rejected the credential. Check OPENAI_API_KEY in "
+            ".env — it must be active and allowed to use MODEL_NAME."
+        )
+    if isinstance(exc, RateLimitError):
+        return "Rate limit or quota reached. Wait and retry, or check billing limits."
+    # APITimeoutError subclasses APIConnectionError, so it is checked first.
+    if isinstance(exc, APITimeoutError):
+        return "The provider did not respond in time. Retry the query."
+    if isinstance(exc, APIConnectionError):
+        return "Could not reach the provider. Check network access and retry."
+    if isinstance(exc, APIStatusError):
+        request = f", request {exc.request_id}" if exc.request_id else ""
+        side = "on the provider's side" if exc.status_code >= 500 else "in the request"
+        return (
+            f"The provider returned HTTP {exc.status_code} ({side}{request}). "
+            "Retry shortly; retrieval alone can be checked offline with "
+            "`python -m src.tools.retrieval`."
+        )
+    return "The provider call failed. Retry, or re-run with AGENTIC_RAG_DEBUG=1."
+
+
+def run_query(graph: CompiledStateGraph, query: str) -> bool:
+    """Run one query through the pipeline and print the staged output.
+
+    Returns:
+        ``True`` when the pipeline produced an answer, ``False`` when the
+        model provider failed — the caller turns that into an exit code.
+    """
     print(BANNER)
     print("[1] USER QUERY")
     print(f"    {query}")
     print(DIVIDER)
 
-    result = graph.invoke({"query": query, "snippets": [], "report": ""})
+    try:
+        result = graph.invoke({"query": query, "snippets": [], "report": ""})
+    except OpenAIError as exc:
+        if os.getenv("AGENTIC_RAG_DEBUG"):
+            raise
+        print(f"ERROR: {provider_error_message(exc)}", file=sys.stderr)
+        print(BANNER)
+        return False
     route = result.get("route", "kb_query")
 
     print(f"[2] ROUTE  (Router Agent) -> {route}")
@@ -52,7 +107,7 @@ def run_query(graph: CompiledStateGraph, query: str) -> None:
         for line in result["report"].splitlines():
             print(f"    {line}")
         print(BANNER)
-        return
+        return True
     print(DIVIDER)
 
     print("[3] RETRIEVED SNIPPETS  (Data Retriever Agent -> tool call)")
@@ -76,10 +131,16 @@ def run_query(graph: CompiledStateGraph, query: str) -> None:
     for line in result["report"].splitlines():
         print(f"    {line}")
     print(BANNER)
+    return True
 
 
 def main() -> None:
-    """Parse the CLI, build the graph once, and dispatch queries."""
+    """Parse the CLI, build the graph once, and dispatch queries.
+
+    A provider failure exits non-zero in single-query mode (so scripts and
+    CI can tell a failed run from a not-found answer) but keeps the
+    interactive loop alive — there the next query is the retry.
+    """
     require_api_key()
     graph = build_graph()
 
@@ -87,8 +148,7 @@ def main() -> None:
         query = " ".join(sys.argv[1:]).strip()
         if not query:
             sys.exit('Usage: python main.py "<your question>"')
-        run_query(graph, query)
-        return
+        sys.exit(0 if run_query(graph, query) else 1)
 
     print("Agentic RAG — interactive mode. Empty line, 'exit', or Ctrl-C to quit.")
     while True:

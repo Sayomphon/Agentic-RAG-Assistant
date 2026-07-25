@@ -13,7 +13,9 @@ this tool, the agents, and the graph stay untouched.
 
 from __future__ import annotations
 
-from langchain_core.tools import tool
+from typing import Annotated
+
+from langchain_core.tools import InjectedToolArg, tool
 
 from src.config import TOP_K
 from src.retrievers import ScoredChunk, get_retriever, has_english_search_terms
@@ -26,8 +28,9 @@ def search_scored(
     top_k: int | None = None,
     mode: str | None = None,
 ) -> list[ScoredChunk]:
-    """Ranked search returning full hits (title, score, source) — the single
-    retrieval path shared by the tool below, the agent node, and UI layers.
+    """Ranked search returning full hits (title, score, source) — the core
+    retrieval routine the tool below wraps, shared with evaluation and UI
+    layers that need ranking metadata without going through an agent.
 
     Args:
         query: Search terms describing the information needed.
@@ -40,19 +43,27 @@ def search_scored(
 
 
 @tool
-def search_knowledge_base(query: str) -> list[str]:
+def search_knowledge_base(
+    query: str,
+    top_k: Annotated[int | None, InjectedToolArg] = None,
+    mode: Annotated[str | None, InjectedToolArg] = None,
+) -> list[ScoredChunk]:
     """Search the Siam Innovate company knowledge base for policy information.
 
     The knowledge base is the official employee handbook covering topics
     such as travel, leave, remote work, expenses, IT security, benefits,
-    and HR processes. Returns raw text snippets ranked most-relevant
+    and HR processes. Returns raw handbook sections ranked most-relevant
     first. Returns an empty list when the handbook contains nothing
     relevant to the query.
 
     Args:
         query: Search terms describing the information needed.
     """
-    return [hit.as_snippet() for hit in search_scored(query)]
+    # ``top_k`` and ``mode`` are InjectedToolArg: they are stripped from the
+    # schema the model sees and supplied by the caller from trusted state,
+    # so the LLM can choose *what* to search for but never how much to
+    # return or which retrieval strategy to use.
+    return search_scored(query, top_k=top_k, mode=mode)
 
 
 if __name__ == "__main__":  # Standalone verification — no LLM involved.
