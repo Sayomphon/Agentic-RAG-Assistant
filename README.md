@@ -76,6 +76,8 @@ that edge *is* the handoff.
 Requires **Python 3.11+** and an OpenAI API key.
 
 ```bash
+git clone https://github.com/Sayomphon/Agentic-RAG-Assistant.git
+cd Agentic-RAG-Assistant
 python3.11 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env                                  # then put your OPENAI_API_KEY in .env
@@ -103,6 +105,36 @@ python -m src.tools.retrieval     # sanity check on sample queries
 python -m src.evaluation.run_eval # regenerates evaluation_results.md
 python -m unittest discover -v
 ```
+
+## Sample Output
+
+Captured from `streamlit run app.py` in **hybrid** mode. Each run shows the full
+pipeline in one view: the Data Retriever's ranked evidence with scores and
+provenance badges (Stage 1), then the Report Generator's grounded answer
+(Stage 2).
+
+**“What is the policy on international travel?”** — the assignment's example
+query. All four travel sections are retrieved and merged into one structured
+answer:
+
+![International travel query — retrieved sections and grounded answer](screenshots/01_international_travel.png)
+
+**“Can I work from home and what approval or security rules apply?”** —
+multi-section synthesis across *Remote Work Policy*, *Hybrid Work Guidelines*,
+and *IT Security and Password Policy*, deduplicated into one answer:
+
+![Remote work query — multi-section synthesis](screenshots/02_remote_work.png)
+
+**“What is the CEO's salary?”** — the designed knowledge-base gap. Zero
+snippets clear the relevance gates, so the deterministic not-found fallback
+fires with no LLM call:
+
+![CEO salary query — not-found guardrail](screenshots/03_not_found_guardrail.png)
+
+**“ลาบวชได้กี่วัน และต้องแจ้งล่วงหน้าอย่างไร?”** — a Thai query answered in Thai; the
+retriever reformulates the search in English to match the handbook's wording:
+
+![Thai query — cross-lingual retrieval and Thai answer](screenshots/04_thai_query.png)
 
 ## Evaluation Results
 
@@ -247,4 +279,3 @@ only possible source.
 - **Small evaluation set.** 15 golden queries protect known behaviours but are
   not statistically representative; production would add real anonymized
   queries, slice metrics, and drift monitoring.
-```
