@@ -70,8 +70,8 @@ that edge *is* the handoff.
     │   ├── dense.py          # OpenAI embeddings + content-addressed disk cache
     │   ├── hybrid.py         # RRF (and weighted) fusion over both sides
     │   └── factory.py        # get_retriever(mode): cached, lazy, keyword-fallback
-    ├── agents/               # retriever (forced tool call) + reporter (synthesis)
-    └── evaluation/           # golden test set + run_eval (writes evaluation_results.md)
+    ├── agents/               # router, retriever, query rewriter, reporter nodes
+    └── evaluation/           # regression suite + comparative benchmark + run_qa
 ```
 
 ## Setup & Run
@@ -104,10 +104,20 @@ streamlit run app.py              # http://localhost:8501
 **Retrieval-only checks** (no LLM; keyword mode needs no API key):
 
 ```bash
-python -m src.tools.retrieval     # sanity check on sample queries
-python -m src.evaluation.run_eval # regenerates evaluation_results.md
+python -m src.tools.retrieval       # sanity check on sample queries
+python -m src.evaluation.regression # exact-match regression suite (exit 1 on regression)
+python -m src.evaluation.run_eval   # comparative benchmark, regenerates evaluation_results.md
 python -m unittest discover -v
 ```
+
+The two evaluation harnesses have deliberately distinct roles: the
+**regression suite** (`regression.py`, 15 exact-match cases) pins the exact
+section set every golden query must return in the default keyword mode and
+runs inside `unittest`, so any retrieval change that silently reorders or
+drops evidence fails CI-style; the **comparative benchmark** (`run_eval.py`,
+a separate 15-query set with per-category metrics) measures all three modes
+side by side to justify mode selection. One guards against going backwards;
+the other measures which direction is forward.
 
 ## Sample Output
 

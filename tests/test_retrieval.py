@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import unittest
 
-from evals.evaluate_retrieval import evaluate
 from src.config import TOP_K
-from src.tools.retrieval import get_retriever, search_knowledge_base
+from src.evaluation.regression import evaluate
+from src.retrievers import get_retriever
+from src.tools.retrieval import search_knowledge_base
 
 
 class RetrievalEvaluationTests(unittest.TestCase):

@@ -1,4 +1,14 @@
-"""Run a deterministic retrieval evaluation without an LLM or API key."""
+"""Retrieval regression suite: exact-match golden cases, no LLM, no API key.
+
+Usage:
+    python -m src.evaluation.regression      # exits non-zero on regression
+
+This is one of the project's two evaluation harnesses, with distinct roles:
+this suite pins exact expected section sets for the default (keyword)
+retriever and runs inside ``unittest`` to catch regressions; its sibling
+``run_eval`` is a comparative benchmark that scores all three retrieval
+modes side by side on a separate golden set.
+"""
 
 from __future__ import annotations
 
@@ -7,9 +17,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from src.config import TOP_K
-from src.tools.retrieval import get_retriever
+from src.retrievers import get_retriever
 
-CASES_PATH = Path(__file__).with_name("retrieval_cases.json")
+CASES_PATH = Path(__file__).with_name("regression_cases.json")
 
 
 @dataclass(frozen=True)
