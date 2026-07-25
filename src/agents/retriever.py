@@ -15,7 +15,12 @@ from typing import TYPE_CHECKING
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents import get_llm
-from src.tools.retrieval import search_knowledge_base
+from src.config import TOP_K
+from src.tools.retrieval import (
+    has_english_search_terms,
+    search_knowledge_base,
+    search_scored,
+)
 
 if TYPE_CHECKING:
     from src.graph import PipelineState
@@ -25,24 +30,40 @@ You are the Data Retriever agent in a two-agent pipeline. Your ONLY job
 is information retrieval from the company knowledge base.
 
 Rules:
-- ALWAYS call the `search_knowledge_base` tool to find snippets relevant
-  to the user's query. Reformulate the query into effective search terms
-  when that will retrieve better results (e.g. expand abbreviations,
-  use the vocabulary a policy handbook would use).
+- Call the `search_knowledge_base` tool exactly ONCE. Use one concise English
+  search query that preserves every important user intent.
+- If the user's query already contains English search terms, copy the user's
+  wording unchanged into the tool's `query` argument. Do not add synonyms,
+  related HR topics, or inferred intent.
+- If the query contains no English search terms, translate it into concise
+  English handbook vocabulary before calling the tool.
+- Do not set or request the number of results; the tool enforces its own limit.
 - NEVER answer the user's question yourself.
 - NEVER summarize, rewrite, filter, or add to the retrieved snippets.
 - The raw snippets returned by the tool are the only output that matters.
 """
 
 
-def retriever_node(state: PipelineState) -> dict[str, list[str]]:
+def _select_search_query(user_query: str, tool_args: dict[str, object]) -> str:
+    """Preserve English user intent; use the model only for translation."""
+    if has_english_search_terms(user_query):
+        return user_query
+    translated_query = str(tool_args.get("query", "")).strip()
+    return translated_query or user_query
+
+
+def retriever_node(state: PipelineState) -> dict[str, object]:
     """Force a knowledge-base search and hand the snippets off via state.
 
     Args:
-        state: Pipeline state containing the user ``query``.
+        state: Pipeline state containing the user ``query``, plus optional
+            per-run ``search_mode`` / ``top_k`` overrides (UI knobs; the
+            config defaults apply when absent).
 
     Returns:
-        Partial state update with the retrieved ``snippets``.
+        Partial state update with the retrieved ``snippets``, the scored
+        ``hits`` (title/score/source metadata for presentation layers),
+        and the ``search_query`` that was actually executed.
     """
     llm_with_tool = get_llm().bind_tools(
         [search_knowledge_base],
@@ -54,11 +75,25 @@ def retriever_node(state: PipelineState) -> dict[str, list[str]]:
             HumanMessage(content=state["query"]),
         ]
     )
-    # Execute every tool call the model issued; dedupe while keeping order
-    # in case reformulated searches return the same chunk twice.
-    snippets: list[str] = []
-    for tool_call in ai_msg.tool_calls:
-        for snippet in search_knowledge_base.invoke(tool_call["args"]):
-            if snippet not in snippets:
-                snippets.append(snippet)
-    return {"snippets": snippets}
+    if not ai_msg.tool_calls:
+        return {"snippets": [], "hits": []}
+
+    # Execute one tool call only, through the same ranking path the tool
+    # wraps (``search_scored`` keeps the score/source metadata that the
+    # string-only tool output drops). The extra slice keeps the output
+    # bound deterministic even if a lower layer misbehaves.
+    search_query = _select_search_query(
+        state["query"],
+        ai_msg.tool_calls[0]["args"],
+    )
+    top_k = state.get("top_k") or TOP_K
+    hits = search_scored(
+        search_query,
+        top_k=top_k,
+        mode=state.get("search_mode"),
+    )[:top_k]
+    return {
+        "snippets": [hit.as_snippet() for hit in hits],
+        "hits": hits,
+        "search_query": search_query,
+    }

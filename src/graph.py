@@ -10,18 +10,30 @@ from __future__ import annotations
 
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 from src.agents.reporter import generator_node
 from src.agents.retriever import retriever_node
+from src.retrievers import ScoredChunk
 
 
 class PipelineState(TypedDict):
-    """Shared state carried across the pipeline — the whole data flow."""
+    """Shared state carried across the pipeline — the whole data flow.
+
+    The three required fields are the core contract (CLI and agents use
+    only these). The ``NotRequired`` fields are optional per-run overrides
+    and retrieval metadata consumed by presentation layers (Streamlit UI);
+    they change nothing when absent.
+    """
 
     query: str            # user question (input)
     snippets: list[str]   # Data Retriever output -> handoff to the Generator
     report: str           # Report Generator output (final answer)
+
+    search_mode: NotRequired[str]   # per-run retrieval mode; config default if absent
+    top_k: NotRequired[int]         # per-run result cap; config default if absent
+    search_query: NotRequired[str]  # query the retriever agent actually searched
+    hits: NotRequired[list[ScoredChunk]]  # scored snippets (title/score/source) for UIs
 
 
 def build_graph() -> CompiledStateGraph:

@@ -1,6 +1,9 @@
 # Secrets — must never be committed
 .env
 
+# Embedding vector cache (rebuilt automatically when the KB changes)
+.cache/
+
 # Python
 __pycache__/
 *.pyc

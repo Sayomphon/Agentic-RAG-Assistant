@@ -20,10 +20,31 @@ TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0"))
 # Knowledge base / retrieval
 KB_PATH: str = os.getenv("KB_PATH", "knowledge_base.txt")
 TOP_K: int = int(os.getenv("TOP_K", "4"))
-# Tuned empirically (see README): incidental single-term matches score
-# <= ~1.7 (e.g. "salary" appearing in unrelated sections), genuinely
-# relevant matches >= ~2.1. 2.0 splits the bands with margin on both sides.
+# BM25 is only the ranking layer. A minimum matched-term gate in the retriever
+# rejects documents that score from one incidental word in a longer query.
 MIN_SCORE: float = float(os.getenv("MIN_SCORE", "2.0"))
+MIN_MATCHED_TERMS: int = int(os.getenv("MIN_MATCHED_TERMS", "2"))
+MIN_RELATIVE_SCORE: float = float(os.getenv("MIN_RELATIVE_SCORE", "0.55"))
+TITLE_BOOST: float = float(os.getenv("TITLE_BOOST", "1.5"))
 
-# Retrieval mode: "keyword" (BM25 baseline) or "semantic" (optional upgrade)
+# Retrieval mode: "keyword" (BM25), "semantic" (embeddings), or "hybrid" (both)
 SEARCH_MODE: str = os.getenv("SEARCH_MODE", "keyword")
+
+# Dense retrieval (used by "semantic" and "hybrid" modes only)
+EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
+# Cosine relevance gate. Cosine similarity is never zero, so without this
+# gate unanswerable queries would always surface the least-unrelated chunk.
+# Tuned on measured data (July 2026, text-embedding-3-small, 54-chunk KB):
+# full-sentence answerable queries scored >= 0.426 against their target
+# section; unanswerable queries peaked at 0.369 ("employee home addresses").
+# 0.38 sits just above that negative ceiling. Ultra-terse positives
+# ("quit my job" = 0.345) fall below the gate and degrade to "not found" —
+# a deliberate trade: a missed answer is recoverable, a fabricated one is not.
+MIN_COSINE: float = float(os.getenv("MIN_COSINE", "0.38"))
+EMBEDDING_CACHE_DIR: str = os.getenv("EMBEDDING_CACHE_DIR", ".cache")
+
+# Hybrid fusion ("rrf" is rank-based and scale-free; "weighted" kept for
+# evaluation comparison — see src/retrievers/hybrid.py for the rationale)
+FUSION_METHOD: str = os.getenv("FUSION_METHOD", "rrf")
+RRF_K: int = int(os.getenv("RRF_K", "60"))
+DENSE_WEIGHT: float = float(os.getenv("DENSE_WEIGHT", "0.5"))

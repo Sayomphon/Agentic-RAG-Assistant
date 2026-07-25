@@ -37,11 +37,14 @@ generator — that edge *is* the handoff.
 ## Project Structure
 
 ```
-├── main.py                   # entry point: staged 3-part output per query
+├── main.py                   # CLI entry point: staged 3-part output per query
+├── app.py                    # Streamlit UI entry point (presentation layer only)
 ├── knowledge_base.txt        # fictional employee handbook (21 sections)
 ├── requirements.txt          # pinned dependencies
 ├── .env.example              # template for the required OPENAI_API_KEY
 ├── screenshots/              # evaluation screenshots
+├── evals/                    # golden queries + deterministic retrieval metrics
+├── tests/                    # offline regression and agent guardrail tests
 └── src/
     ├── config.py             # all tunables, each overridable via env var
     ├── graph.py              # PipelineState + StateGraph wiring
@@ -74,10 +77,18 @@ python main.py "What is the policy on international travel?"
 python main.py                    # interactive; empty line or 'exit' to quit
 ```
 
+Or run the web UI (same pipeline, same core — see [Web UI](#web-ui-streamlit)):
+
+```bash
+streamlit run app.py
+```
+
 Test retrieval standalone, with no LLM and no API key involved:
 
 ```bash
 python -m src.tools.retrieval
+python -m evals.evaluate_retrieval
+python -m unittest discover -v
 ```
 
 ## Example Output
@@ -111,8 +122,38 @@ python -m src.tools.retrieval
 ============================================================
 ```
 
-More runs (multi-section synthesis, the not-found case, short ambiguous
-queries) are captured in [screenshots/](screenshots/).
+For the final submission, capture the multi-section, paraphrase, not-found,
+and multilingual runs in [screenshots/](screenshots/) after the evaluation
+suite passes.
+
+## Web UI (Streamlit)
+
+```bash
+streamlit run app.py              # http://localhost:8501
+```
+
+The UI is deliberately **not a chatbox**. A chat window would hide exactly
+the thing this system is built to demonstrate: that the answer is produced
+by a two-stage pipeline with an inspectable evidence hand-off. Instead the
+page renders each run the way the architecture works:
+
+- **Stage 1 — Data Retriever**: every retrieved snippet with its rank,
+  relevance score, and a provenance badge (BM25 / embeddings / both under
+  hybrid fusion), expandable to the raw chunk text.
+- **Stage 2 — Report Generator**: the grounded answer, visually separated
+  so it is obvious it was synthesized *from the evidence above* — and when
+  retrieval returns nothing, the UI shows the deterministic not-found
+  fallback instead of an invented answer.
+- **Live retrieval controls**: the sidebar switches search mode
+  (keyword / semantic / hybrid) and `top_k` per query, making the retriever
+  comparison from the evaluation section reproducible interactively.
+- **Telemetry**: per-stage wall time, snippet count, mode, and model for
+  every run, plus a session history to revisit earlier results.
+
+`app.py` is a pure presentation layer: it calls the same `build_graph()`
+the CLI uses and the same retriever factory the tool layer uses (cached
+with `st.cache_resource`, keyed by mode), and renders what comes back.
+Both entry points share one core; neither duplicates any pipeline logic.
 
 ## Design Decisions
 
@@ -127,27 +168,25 @@ makes that handoff a first-class, visible object (`snippets`) instead of an
 implicit function-call chain, and it extends naturally (add a node, add an
 edge) without touching existing agents.
 
-**BM25 first, semantic as an upgrade path.** Keyword BM25 (`rank-bm25`) is a
-dependable baseline: no model downloads, explainable scores, trivial to debug.
-Its known weakness is paraphrase: "work from home" misses the section worded
-"work remotely" — in testing, that section scored 1.33 while incidental
-single-word noise reached 1.67, so no threshold can separate them. That is a
-vocabulary-mismatch problem, which is exactly what embeddings solve; the
-`Retriever` protocol + `get_retriever()` factory (selected by `SEARCH_MODE`)
-is the seam where a semantic implementation drops in without touching the
-tool signature, the agents, or the graph.
+**Evaluated, title-aware BM25 baseline.** Keyword BM25 (`rank-bm25`) keeps the
+demo local, fast, explainable, and free of model downloads. Natural-language
+precision is protected by four deterministic layers: phrase aliases for common
+handbook vocabulary, stop-word removal plus light stemming, a title-weighted
+BM25 score, and a minimum matched-term gate. A relative-score floor removes the
+weak long tail instead of treating every result above one global threshold as
+equally relevant.
 
-**Relevance threshold (`MIN_SCORE = 2.0`), tuned empirically.** Measured on
-the test matrix: incidental single-term matches (e.g. "salary" appearing in
-unrelated sections for the query "What is the CEO's salary?") score ≤ ~1.7,
-while genuinely relevant matches score ≥ ~2.1. The threshold 2.0 splits the
-bands with margin on both sides, so off-KB queries return an *empty* result
-instead of a least-bad match.
+The golden query set contains 15 exact, paraphrase, multi-section, ambiguous,
+and negative cases. `python -m evals.evaluate_retrieval` currently reports
+100% exact section-set match, macro precision, and macro recall on that
+version-controlled set. This is a regression baseline, not a claim of general
+language understanding. The `Retriever` protocol + `get_retriever()` factory
+remain the seam for a later semantic or hybrid implementation.
 
 **Guardrails, in three layers.**
 1. *Structural* — the retriever binds the tool with `tool_choice="required"`,
-   so it mechanically cannot answer from its own knowledge. Enforcement in
-   code beats requests in prose.
+   executes only the first tool call, and caps output at `TOP_K`, so provider
+   behaviour cannot create an unbounded evidence set.
 2. *Prompt* — the generator must use only the provided snippets, merge
    overlapping facts, and fall back to one fixed sentence when the snippets
    are insufficient.
@@ -179,9 +218,10 @@ in deliberately:
 
 ## Limitations & Next Steps
 
-- **Paraphrase-blind keyword search** — the documented BM25 gap; next step is
-  the semantic `SEARCH_MODE` (local `sentence-transformers` embeddings behind
-  the existing `Retriever` protocol).
+- **Curated lexical normalization** — aliases handle known handbook phrasing,
+  but unseen English synonyms can still miss. Non-English input relies on the
+  LLM for translation before deterministic retrieval. The next step is a
+  measured hybrid semantic retriever behind the existing `Retriever` protocol.
 - **No re-ranking or citations** — snippets go to the generator in BM25
   order; a cross-encoder re-ranker and per-claim citation markers would
   harden answer quality at larger KB sizes.
@@ -190,6 +230,7 @@ in deliberately:
 - **In-memory index** — ideal at 21 chunks (index build: <1 ms, warm query:
   ~0.01 ms). At ~100k chunks this becomes batch offline embedding, an
   external vector store, and an approximate-nearest-neighbour index.
-- **No automated eval harness** — behaviour is verified against a 5-query
-  matrix by hand; a scripted regression suite (expected-section assertions
-  per query) would catch retrieval drift on KB edits.
+- **Small evaluation set** — the current 15 golden queries protect known
+  behaviours but are not statistically representative. Production evaluation
+  would expand this with real anonymized queries, slice metrics, and drift
+  monitoring.
