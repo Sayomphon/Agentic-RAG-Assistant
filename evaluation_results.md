@@ -1,6 +1,6 @@
 # Retrieval Evaluation Results
 
-- Run date: 2026-07-25 11:34
+- Run date: 2026-07-25 13:22
 - Test set: 15 queries (src/evaluation/testset.py)
 - Config: TOP_K=4, MIN_SCORE=2.0, MIN_COSINE=0.38, EMBEDDING_MODEL=text-embedding-3-small, FUSION_METHOD=rrf, RRF_K=60
 
@@ -8,9 +8,9 @@
 
 | mode     | hit_rate@k | recall@k | MRR   | FP_rate(neg) | avg_latency |
 |----------|------------|----------|-------|--------------|-------------|
-| keyword  | 62%        | 54%      | 0.558 | 50%          | 0.1 ms      |
-| semantic | 77%        | 71%      | 0.718 | 0%           | 439.3 ms    |
-| hybrid   | 85%        | 77%      | 0.808 | 50%          | 416.0 ms    |
+| keyword  | 62%        | 54%      | 0.558 | 0%           | 0.1 ms      |
+| semantic | 77%        | 71%      | 0.718 | 0%           | 431.4 ms    |
+| hybrid   | 85%        | 77%      | 0.808 | 0%           | 429.4 ms    |
 
 ## Per category
 
@@ -25,7 +25,7 @@
 | multi_chunk | 3 | hit_rate | 100%    | 100%     | 100%   |
 | multi_chunk | 3 | recall   | 67%     | 75%      | 67%    |
 | multi_chunk | 3 | MRR      | 1.000   | 1.000    | 1.000  |
-| negative    | 2 | FP_rate  | 50%     | 0%       | 50%    |
+| negative    | 2 | FP_rate  | 0%      | 0%       | 0%     |
 
 ## Imperfect cases
 
@@ -38,7 +38,6 @@
 | keyword  | sem_sla_uptime      | Service Credit Policy                                                                                                                          | []                                                                                                                                  |
 | keyword  | multi_overseas_trip | International Travel Approval Process, International Travel Daily Allowance, International Travel Insurance, International Travel Visa Support | International Travel Approval Process, International Travel Insurance, Software Request and Licensing, Domestic Travel Policy       |
 | keyword  | multi_new_supplier  | Purchase Requisition and Purchase Orders, Vendor Onboarding and Registration                                                                   | Vendor Onboarding and Registration                                                                                                  |
-| keyword  | neg_ceo_salary      | (nothing)                                                                                                                                      | Parental Leave                                                                                                                      |
 | semantic | lex_form_hr204      | Employee Referral Program                                                                                                                      | []                                                                                                                                  |
 | semantic | sem_quit_job        | Resignation Process                                                                                                                            | []                                                                                                                                  |
 | semantic | sem_counseling      | Employee Assistance Program                                                                                                                    | []                                                                                                                                  |
@@ -48,4 +47,3 @@
 | hybrid   | sem_counseling      | Employee Assistance Program                                                                                                                    | []                                                                                                                                  |
 | hybrid   | multi_overseas_trip | International Travel Approval Process, International Travel Daily Allowance, International Travel Insurance, International Travel Visa Support | International Travel Approval Process, International Travel Insurance, Domestic Travel Policy, Software Request and Licensing       |
 | hybrid   | multi_new_supplier  | Purchase Requisition and Purchase Orders, Vendor Onboarding and Registration                                                                   | Vendor Onboarding and Registration                                                                                                  |
-| hybrid   | neg_ceo_salary      | (nothing)                                                                                                                                      | Parental Leave                                                                                                                      |

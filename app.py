@@ -33,36 +33,52 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------- chrome ---
+# One spacing scale (4/8/16/24/32px) drives every gap and margin; hierarchy
+# comes from weight + space, not colour; raw evidence reads as data (mono,
+# muted, hairline-ruled), the answer reads as prose. currentColor auto-adapts
+# every derived tone to the active theme, so no dark-mode block is needed.
 _CSS = """
 <style>
-:root { --accent:#3D63DD; --tc:#31333f; --sbg:#f0f2f6; }
-@media (prefers-color-scheme: dark) { :root { --tc:#fafafa; --sbg:#262730; } }
-.block-container, [data-testid="stMainBlockContainer"] { max-width:64rem; padding-top:2.6rem; }
+:root {
+  --s1:4px; --s2:8px; --s3:16px; --s4:24px; --s5:32px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  --line:color-mix(in srgb, currentColor 15%, transparent);
+  --muted:color-mix(in srgb, currentColor 58%, transparent);
+  --faint:color-mix(in srgb, currentColor 40%, transparent);
+}
+.block-container, [data-testid="stMainBlockContainer"] { max-width:60rem; padding-top:var(--s5); }
 #MainMenu, footer, [data-testid="stDecoration"] { visibility:hidden; }
-.app-title { font-size:1.5rem; font-weight:700; letter-spacing:-.02em; margin:0; }
-.app-sub { font-size:.9rem; color:color-mix(in srgb, var(--text-color, var(--tc)) 65%, transparent); margin:.2rem 0 1.1rem; }
-.stage-head { display:flex; align-items:baseline; gap:.65rem; margin:1.7rem 0 .6rem; padding-bottom:.35rem; border-bottom:1px solid color-mix(in srgb, var(--text-color, var(--tc)) 12%, transparent); }
-.stage-kicker { font-size:.7rem; font-weight:700; letter-spacing:.09em; white-space:nowrap; color:color-mix(in srgb, var(--accent) 70%, var(--text-color, var(--tc))); }
-.stage-title { font-size:1.02rem; font-weight:650; }
-.stage-sub { font-size:.78rem; color:color-mix(in srgb, var(--text-color, var(--tc)) 55%, transparent); }
-.telemetry { display:flex; flex-wrap:wrap; gap:1.5rem; padding:.55rem .95rem; border:1px solid color-mix(in srgb, var(--text-color, var(--tc)) 13%, transparent); border-radius:.5rem; background:var(--secondary-background-color, var(--sbg)); }
-.telemetry .t { display:flex; flex-direction:column; }
-.telemetry .k { font-size:.63rem; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:color-mix(in srgb, var(--text-color, var(--tc)) 55%, transparent); }
-.telemetry .v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.84rem; font-weight:600; }
-details.snip { border:1px solid color-mix(in srgb, var(--text-color, var(--tc)) 13%, transparent); border-radius:.5rem; background:var(--secondary-background-color, var(--sbg)); margin-bottom:.45rem; overflow:hidden; }
-details.snip summary { display:flex; align-items:center; gap:.6rem; padding:.5rem .85rem; cursor:pointer; list-style:none; }
+
+.app-title { font-size:1.55rem; font-weight:700; letter-spacing:-.02em; margin:0; }
+.app-sub { font-size:.92rem; line-height:1.5; color:var(--muted); max-width:58ch; margin:var(--s2) 0 var(--s5); }
+.query-echo { font-size:1.15rem; font-weight:600; letter-spacing:-.01em; margin:0 0 var(--s3); }
+
+.telemetry { display:flex; flex-wrap:wrap; gap:var(--s4); padding:var(--s3) 0; margin-bottom:var(--s2); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.telemetry .t { display:flex; flex-direction:column; gap:var(--s1); }
+.telemetry .k { font-size:.62rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.telemetry .v { font-family:var(--mono); font-size:.9rem; font-weight:500; }
+
+.stage-head { display:flex; align-items:baseline; gap:var(--s2); flex-wrap:wrap; margin:var(--s5) 0 var(--s3); }
+.stage-kicker { font-family:var(--mono); font-size:.68rem; font-weight:600; letter-spacing:.1em; color:var(--faint); }
+.stage-title { font-size:1.05rem; font-weight:650; letter-spacing:-.01em; }
+.stage-sub { font-size:.78rem; color:var(--muted); }
+
+details.snip { border-left:2px solid var(--line); padding-left:var(--s3); }
+details.snip + details.snip { margin-top:var(--s2); }
+details.snip[open] { border-left-color:var(--muted); }
+details.snip summary { display:flex; align-items:center; gap:var(--s2); padding:var(--s1) 0; cursor:pointer; list-style:none; }
 details.snip summary::-webkit-details-marker { display:none; }
-details.snip summary::after { content:"+"; font-family:ui-monospace,monospace; color:color-mix(in srgb, var(--text-color, var(--tc)) 45%, transparent); }
+details.snip summary::after { content:"+"; font-family:var(--mono); color:var(--faint); }
 details.snip[open] summary::after { content:"−"; }
-.snip-rank { font-family:ui-monospace,monospace; font-size:.72rem; font-weight:600; color:color-mix(in srgb, var(--text-color, var(--tc)) 50%, transparent); }
-.snip-title { font-size:.88rem; font-weight:600; }
-.snip-score { margin-left:auto; font-family:ui-monospace,monospace; font-size:.72rem; color:color-mix(in srgb, var(--text-color, var(--tc)) 55%, transparent); }
-.badge { font-size:.62rem; font-weight:700; letter-spacing:.05em; padding:.13rem .5rem; border-radius:99px; white-space:nowrap; }
-.badge-one { color:color-mix(in srgb, var(--text-color, var(--tc)) 75%, transparent); border:1px solid color-mix(in srgb, var(--text-color, var(--tc)) 30%, transparent); }
-.badge-both { color:#fff; background:var(--accent); }
-details.snip pre { margin:0; padding:.65rem .9rem .85rem; border-top:1px dashed color-mix(in srgb, var(--text-color, var(--tc)) 18%, transparent); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.76rem; line-height:1.6; white-space:pre-wrap; background:transparent; color:color-mix(in srgb, var(--text-color, var(--tc)) 85%, transparent); }
-.empty { text-align:center; padding:1.5rem 1rem; border:1px dashed color-mix(in srgb, var(--text-color, var(--tc)) 25%, transparent); border-radius:.5rem; font-size:.88rem; color:color-mix(in srgb, var(--text-color, var(--tc)) 60%, transparent); background:var(--secondary-background-color, var(--sbg)); }
-.empty b { display:block; font-size:.95rem; margin-bottom:.15rem; color:color-mix(in srgb, var(--text-color, var(--tc)) 80%, transparent); }
+.snip-rank { font-family:var(--mono); font-size:.72rem; color:var(--faint); }
+.snip-title { font-size:.9rem; font-weight:550; }
+.snip-score { margin-left:auto; font-family:var(--mono); font-size:.72rem; color:var(--muted); }
+.badge { font-family:var(--mono); font-size:.62rem; font-weight:600; letter-spacing:.03em; color:var(--muted); }
+.badge-both { font-weight:700; color:inherit; }
+details.snip pre { margin:var(--s2) 0 0; padding:0; font-family:var(--mono); font-size:.78rem; line-height:1.7; white-space:pre-wrap; color:var(--muted); }
+
+.empty { padding:var(--s4) var(--s3); border:1px dashed var(--line); border-radius:8px; color:var(--muted); font-size:.9rem; }
+.empty b { display:block; font-weight:650; margin-bottom:var(--s1); color:inherit; }
 </style>
 """
 st.markdown(_CSS, unsafe_allow_html=True)
@@ -117,7 +133,7 @@ def _badge(source: str) -> str:
     if "+" in source:
         return '<span class="badge badge-both">BM25 + EMBEDDINGS</span>'
     label = {"bm25": "BM25", "dense": "EMBEDDINGS"}.get(source, html.escape(source).upper())
-    return f'<span class="badge badge-one">{label}</span>'
+    return f'<span class="badge">{label}</span>'
 
 
 def _snippet_cards(hits) -> str:
@@ -155,7 +171,7 @@ def _telemetry(run: dict) -> str:
 
 def render_run(run: dict) -> None:
     """Display one completed pipeline run: telemetry, evidence, answer."""
-    st.markdown(f"##### “{run['query']}”")
+    st.markdown(f'<p class="query-echo">“{html.escape(run["query"])}”</p>', unsafe_allow_html=True)
     st.markdown(_telemetry(run), unsafe_allow_html=True)
 
     _stage_head(1, "Data Retriever Agent", "forced tool call → ranked evidence from the knowledge base")
@@ -173,18 +189,17 @@ def render_run(run: dict) -> None:
         )
 
     _stage_head(2, "Report Generator Agent", "grounded synthesis — uses the snippets above and nothing else")
-    with st.container(border=True):
-        if run["report"].strip() == NOT_FOUND_SENTENCE:
-            st.markdown(f"*{run['report']}*")
-            st.caption(
-                "Deterministic fallback: zero snippets were handed off, so this "
-                "fixed sentence was returned without an LLM call."
-                if not run["hits"]
-                else "Prompt guardrail: the generator judged the retrieved "
-                "snippets insufficient to answer this query."
-            )
-        else:
-            st.markdown(run["report"])
+    if run["report"].strip() == NOT_FOUND_SENTENCE:
+        st.markdown(f"*{run['report']}*")
+        st.caption(
+            "Deterministic fallback: zero snippets were handed off, so this "
+            "fixed sentence was returned without an LLM call."
+            if not run["hits"]
+            else "Prompt guardrail: the generator judged the retrieved "
+            "snippets insufficient to answer this query."
+        )
+    else:
+        st.markdown(run["report"])
 
 
 # ------------------------------------------------------------ run driver ---

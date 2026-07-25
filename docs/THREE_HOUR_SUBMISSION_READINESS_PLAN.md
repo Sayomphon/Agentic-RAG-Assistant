@@ -49,7 +49,7 @@ Programming Test ภายใน 180 นาที**
 
 ---
 
-## 3. Scope ที่ต้องทำและสิ่งที่ต้องตัดออก
+## 3. Scope ที่ต้องทำ
 
 ### 3.1 Must-have ภายใน 3 ชั่วโมง
 
@@ -62,29 +62,15 @@ Programming Test ภายใน 180 นาที**
 5. Minimal CI และ error UX
 6. README ที่อิงหลักฐานจริง
 
-### 3.2 Explicitly Deferred
+### 3.2 Scope Boundary
 
-ไม่ implement รายการต่อไปนี้ในรอบ 3 ชั่วโมง:
+ภายในรอบ 3 ชั่วโมงให้ทำเฉพาะ Must-have ด้านบน ห้ามเพิ่ม feature ใหม่
+นอกเหนือจากแผน เพราะทุกนาทีต้องใช้กับ correctness, tests, evidence,
+documentation และ submission quality
 
-- LangSmith/OpenTelemetry
-- Cross-encoder reranker
-- Conversation memory
-- FastAPI service
-- Docker/Compose
-- Cloud deployment
-- Authentication/RBAC
-- Vector database
-
-เหตุผล:
-
-- ไม่ใช่ requirement บังคับของ Programming Test
-- เพิ่ม dependency และ failure surface
-- ต้องใช้เวลาออกแบบและ validation มากกว่าเวลาที่มี
-- คะแนนจาก tests, evaluation, citations และ reproducibility สูงกว่า
-
-ให้บันทึกรายการเหล่านี้ใน README หัวข้อ `Production Roadmap`
-โดยอธิบายเหตุผลและเงื่อนไขที่จะเลือกใช้ ไม่ควรสร้าง placeholder code
-หรือ claim ว่า production-ready
+หากพบแนวคิดเพิ่มเติมระหว่างทำ ให้บันทึกไว้ใน working notes เท่านั้น
+ไม่สร้าง placeholder code และไม่ขยาย dependency จนกว่า Go/No-Go Gate
+ก่อนส่งจะผ่านครบทุกข้อ
 
 ---
 
@@ -137,7 +123,7 @@ git diff --check
 ### 5.4 Exit criteria
 
 - เก็บ baseline ไว้ใน working note หรือ commit description
-- ห้ามเริ่ม UI, Docker, tracing หรือ agent ใหม่
+- ห้ามเริ่ม UI redesign, service ใหม่ หรือ agent ใหม่
 
 ---
 
@@ -512,14 +498,11 @@ python -m src.evaluation.run_eval
 streamlit run app.py
 ```
 
-9. เพิ่ม `Production Roadmap`:
-   - RBAC
-   - PDPA/data governance
-   - document versioning
-   - prompt-injection defense
-   - tracing
-   - vector database
-   - deployment
+9. เพิ่ม `Known Limitations` แบบกระชับ:
+   - evaluation dataset ยังมีขนาดเล็ก
+   - Semantic/Hybrid mode มี API latency และ cost
+   - threshold และ aliases ยังอิง corpus ปัจจุบัน
+   - ควรใช้ anonymized real queries เพื่อประเมินก่อนนำไปใช้จริง
 
 ### 11.3 วิธีรายงาน metrics
 
@@ -686,7 +669,7 @@ feat: add semantic and hybrid retrieval explorer
 
 ใช้ลำดับการตัด scope ดังนี้:
 
-1. ตัด Docker/Tracing/Reranker/Memory ทั้งหมด
+1. ห้ามเพิ่ม feature ใหม่ที่อยู่นอก Must-have ของแผน
 2. ตัดการเพิ่ม test cases ใหม่ แต่ห้ามตัด failing tests เดิม
 3. ใช้ citations แบบ section title ไม่สร้าง citation framework
 4. ใช้ screenshots 4 ภาพ ไม่ทำ GIF/video
@@ -712,7 +695,7 @@ feat: add semantic and hybrid retrieval explorer
 - ใช้ structural guardrails และ deterministic fallback
 - สร้าง source-grounded answer พร้อม citations
 - ทำ automated regression tests และ CI
-- อธิบายข้อจำกัดและ production roadmap อย่างมีเหตุผล
+- อธิบายข้อจำกัดและ trade-offs อย่างมีเหตุผล
 - ส่ง repository ที่ clone และรันซ้ำได้
 
 จุดขายหลักของ submission ไม่ควรเป็น “มี feature มากที่สุด”

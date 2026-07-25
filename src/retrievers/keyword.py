@@ -70,6 +70,11 @@ _STOP_WORDS = frozenset(
         "please",
         "policy",
         "rule",
+        # Possessive fragment: "CEO's" tokenizes to "ceo", "s". Indexed from
+        # 26/54 KB sections ("company's", "month's", ...), the stray "s"
+        # carries no content yet counts as a distinct matched term, letting
+        # single-incidental-word chunks slip past MIN_MATCHED_TERMS.
+        "s",
         "should",
         "tell",
         "that",
