@@ -33,6 +33,10 @@ Rules:
 - PRESERVE the user's original intent exactly. Never change the subject,
   never generalize so far that the query could match unrelated sections.
   If the user asks about X, the new query must still be about X.
+- Rewrite the WORDING, not the REQUEST. If the user asks for a specific
+  piece of data or a fact, the new query must still ask for that same
+  data — never turn it into a query about policies, procedures, or
+  guidelines ABOUT that data.
 - If the user's question is not in English, write the new query in
   concise English handbook vocabulary.
 - NEVER answer the user's question. NEVER add commentary. The tool call

@@ -40,6 +40,14 @@ Rules:
 - If the snippets do not contain the information needed to answer the
   query, reply with exactly this sentence and nothing else — no
   citation: "{NOT_FOUND_SENTENCE}"
+- Snippets that merely relate to the query's topic do not count as an
+  answer. If the user asks for specific data or a specific fact and the
+  snippets only describe rules or processes about that topic without
+  stating the requested information itself, use the not-found sentence.
+  Example: if the query asks for employees' contact details and a
+  snippet only says such records are classified or restricted, the
+  requested data is NOT in the snippets — reply with the not-found
+  sentence, not with the classification rules.
 - Keep the answer concise, well formatted (short paragraphs or bullet
   points), and directly responsive to the query.
 """

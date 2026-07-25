@@ -111,6 +111,13 @@ python -m unittest discover -v
 
 ## Sample Output
 
+**End-to-end Q→A transcript:** [sample_qa_results.md](sample_qa_results.md)
+runs 17 questions (the full 15-query golden set plus a Thai query and a
+greeting) through the real pipeline in hybrid mode and records every decision
+per question — the router's verdict, each search attempt with the rewritten
+query, the evidence with scores and provenance, and the final answer verbatim.
+Generated with `python -m src.evaluation.run_qa`.
+
 Captured from `streamlit run app.py` in **hybrid** mode. Each run shows the full
 pipeline in one view: the Data Retriever's ranked evidence with scores and
 provenance badges (Stage 1), then the Report Generator's grounded answer
