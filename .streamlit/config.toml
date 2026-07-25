@@ -1,0 +1,31 @@
+# Theme tokens — the "Industrial Logic" palette, applied through Streamlit's
+# own theme system rather than injected CSS, so widgets (buttons, inputs,
+# pills, spinners) inherit it instead of being overridden after the fact.
+#
+# Font families list JetBrains Mono / Hanken Grotesk first and fall back to
+# system faces: an installed copy is used when present, and nothing is
+# fetched from a CDN, so the app stays fully offline-capable.
+
+[theme]
+base = "light"
+primaryColor = "#004688"            # actions, focus rings, active states
+backgroundColor = "#f9f9ff"         # surface
+secondaryBackgroundColor = "#f0f3ff" # sidebar, inputs, code blocks
+textColor = "#111c2d"               # on-surface
+borderColor = "#c2c6d3"             # outline-variant — hairlines only
+linkColor = "#004688"
+baseRadius = "0.25rem"              # "shapes are strictly soft (4px)"
+buttonRadius = "0.25rem"
+showWidgetBorder = true             # inputs read as a 1px rule, not a grey fill
+font = "Hanken Grotesk, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+codeFont = "JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace"
+
+# Dark variant: surfaces drop to deep slates, borders lighten just enough to
+# keep definition without glowing.
+[theme.dark]
+primaryColor = "#a7c8ff"
+backgroundColor = "#0f172a"
+secondaryBackgroundColor = "#1e293b"
+textColor = "#ecf1ff"
+borderColor = "#334155"
+linkColor = "#a7c8ff"

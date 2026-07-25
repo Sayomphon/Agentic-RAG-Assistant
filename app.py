@@ -46,22 +46,27 @@ _CSS = """
   --muted:color-mix(in srgb, currentColor 58%, transparent);
   --faint:color-mix(in srgb, currentColor 40%, transparent);
 }
-.block-container, [data-testid="stMainBlockContainer"] { max-width:60rem; padding-top:var(--s5); }
+/* 64px clears Streamlit's sticky header, which was cropping the title. */
+.block-container, [data-testid="stMainBlockContainer"] { max-width:60rem; padding-top:calc(var(--s5)*2); }
+.st-key-chips { gap:var(--s2); }
+.st-key-chips button { padding:var(--s1) var(--s3); font-size:.8rem; font-weight:450; }
 #MainMenu, footer, [data-testid="stDecoration"] { visibility:hidden; }
 
 .app-title { font-size:1.55rem; font-weight:700; letter-spacing:-.02em; margin:0; }
 .app-sub { font-size:.92rem; line-height:1.5; color:var(--muted); max-width:58ch; margin:var(--s2) 0 var(--s5); }
 .query-echo { font-size:1.15rem; font-weight:600; letter-spacing:-.01em; margin:0 0 var(--s3); }
 
+/* One label style for every piece of metadata: mono, small, uppercase. */
+.label-caps { font-family:var(--mono); font-size:.62rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+
 .telemetry { display:flex; flex-wrap:wrap; gap:var(--s4); padding:var(--s3) 0; margin-bottom:var(--s2); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 .telemetry .t { display:flex; flex-direction:column; gap:var(--s1); }
-.telemetry .k { font-size:.62rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
 .telemetry .v { font-family:var(--mono); font-size:.9rem; font-weight:500; }
 
 .stage-head { display:flex; align-items:baseline; gap:var(--s2); flex-wrap:wrap; margin:var(--s5) 0 var(--s3); }
-.stage-kicker { font-family:var(--mono); font-size:.68rem; font-weight:600; letter-spacing:.1em; color:var(--faint); }
 .stage-title { font-size:1.05rem; font-weight:650; letter-spacing:-.01em; }
 .stage-sub { font-size:.78rem; color:var(--muted); }
+.stage-metric { margin-left:auto; font-family:var(--mono); font-size:.72rem; color:var(--faint); }
 
 details.snip { border-left:2px solid var(--line); padding-left:var(--s3); }
 details.snip + details.snip { margin-top:var(--s2); }
@@ -99,9 +104,9 @@ _MODE_CAPTIONS = (
 _MODE_SOURCE = {"keyword": "bm25", "semantic": "dense", "hybrid": "hybrid"}
 
 _EXAMPLES = (
-    ("International travel", "What is the policy on international travel?"),
+    ("Travel", "What is the policy on international travel?"),
     ("Work from home", "Can I work from home every day?"),
-    ("Mileage claim", "How much can I claim when I use my own car for a client visit?"),
+    ("Mileage", "How much can I claim when I use my own car for a client visit?"),
     ("Thai query", "ลาบวชได้กี่วัน และต้องแจ้งล่วงหน้าอย่างไร?"),
     ("Not in KB", "What is the CEO's salary?"),
     ("Greeting", "Hello! What can you do?"),
@@ -122,11 +127,18 @@ def load_retriever(mode: str):
 
 
 # ------------------------------------------------------------- renderers ---
-def _stage_head(number: int, title: str, sub: str) -> None:
+def _stage_head(number: int, title: str, sub: str, metric: str = "") -> None:
+    """Render a stage heading; ``metric`` trails right as that stage's result.
+
+    Per-stage counts and latency live here rather than in the telemetry strip
+    so they survive a rerun — ``st.status`` is transient and disappears when
+    an earlier run is reopened from the history.
+    """
+    tail = f'<span class="stage-metric">{html.escape(metric)}</span>' if metric else ""
     st.markdown(
-        f'<div class="stage-head"><span class="stage-kicker">STAGE {number}</span>'
+        f'<div class="stage-head"><span class="label-caps">Stage {number}</span>'
         f'<span class="stage-title">{title}</span>'
-        f'<span class="stage-sub">{sub}</span></div>',
+        f'<span class="stage-sub">{sub}</span>{tail}</div>',
         unsafe_allow_html=True,
     )
 
@@ -164,46 +176,78 @@ def _snippet_cards(hits) -> str:
 
 
 def _telemetry(run: dict) -> str:
-    timings = run["timings"]
-    total = sum(timings.values())
+    """Run-level facts only — per-stage counts and timings sit on the stages."""
+    total = sum(run["timings"].values())
     if run.get("route") == "direct":
-        items = (
-            ("route", "direct"),
-            ("model", run["model"]),
-            ("respond", f"{timings.get('synthesis', 0):.2f}s"),
-            ("total", f"{total:.2f}s"),
-        )
+        items = (("route", "direct"), ("model", run["model"]), ("total", f"{total:.2f}s"))
     else:
         items = (
             ("route", run.get("route", "kb_query")),
             ("mode", run["mode"]),
             ("model", run["model"]),
             ("top-k", str(run["top_k"])),
-            ("attempts", str(len(run.get("search_attempts") or []) or 1)),
-            ("snippets", str(len(run["snippets"]))),
-            ("stage 1 · retrieve", f"{timings.get('retrieval', 0):.2f}s"),
-            ("stage 2 · synthesize", f"{timings.get('synthesis', 0):.2f}s"),
             ("total", f"{total:.2f}s"),
         )
     spans = "".join(
-        f'<div class="t"><span class="k">{k}</span><span class="v">{html.escape(v)}</span></div>'
+        f'<div class="t"><span class="label-caps">{k}</span>'
+        f'<span class="v">{html.escape(v)}</span></div>'
         for k, v in items
     )
     return f'<div class="telemetry">{spans}</div>'
+
+
+def _as_markdown(run: dict) -> str:
+    """One run as portable markdown: question, answer, evidence, settings."""
+    lines = [f'# {run["query"]}', "", run["report"].strip(), ""]
+    if run["hits"]:
+        lines.append("## Evidence")
+        lines += [
+            f"- {hit.title} — score {hit.score:.4f} ({hit.source})" for hit in run["hits"]
+        ]
+        lines.append("")
+    lines.append(
+        f'_route {run.get("route", "kb_query")} · mode {run["mode"]} · '
+        f'model {run["model"]} · top-k {run["top_k"]}_'
+    )
+    return "\n".join(lines)
+
+
+def _answer_actions(run: dict) -> None:
+    """Take the answer elsewhere — download the transcript or copy the markdown."""
+    doc = _as_markdown(run)
+    with st.container(horizontal=True):
+        st.download_button(
+            "Download .md", doc, file_name="agentic-rag-answer.md",
+            mime="text/markdown", width="content",
+        )
+        with st.popover("Copy markdown", width="content"):
+            st.code(doc, language="markdown")
 
 
 def render_run(run: dict) -> None:
     """Display one completed pipeline run: telemetry, evidence, answer."""
     st.markdown(f'<p class="query-echo">“{html.escape(run["query"])}”</p>', unsafe_allow_html=True)
     st.markdown(_telemetry(run), unsafe_allow_html=True)
+    timings = run["timings"]
 
     if run.get("route") == "direct":
-        _stage_head(1, "Direct Responder", "router verdict: small talk / meta — the knowledge base was never touched")
+        _stage_head(
+            1, "Direct Responder",
+            "router verdict: small talk / meta — the knowledge base was never touched",
+            f'responded · {timings.get("synthesis", 0):.2f}s',
+        )
         st.markdown(run["report"])
+        _answer_actions(run)
         return
 
-    _stage_head(1, "Data Retriever Agent", "forced tool call → ranked evidence from the knowledge base")
     attempts = run.get("search_attempts") or []
+    hits, tries = len(run["hits"]), len(attempts) or 1
+    _stage_head(
+        1, "Data Retriever Agent", "forced tool call → ranked evidence",
+        f'{hits} snippet{"" if hits == 1 else "s"} · '
+        f'{tries} attempt{"" if tries == 1 else "s"} · '
+        f'{timings.get("retrieval", 0):.2f}s',
+    )
     if len(attempts) > 1:
         # Every attempt before the last found nothing — the rewriter then
         # proposed the next query. Show the whole agentic trail.
@@ -226,8 +270,12 @@ def render_run(run: dict) -> None:
             unsafe_allow_html=True,
         )
 
-    _stage_head(2, "Report Generator Agent", "grounded synthesis — uses the snippets above and nothing else")
-    if run["report"].strip() == NOT_FOUND_SENTENCE:
+    not_found = run["report"].strip() == NOT_FOUND_SENTENCE
+    _stage_head(
+        2, "Report Generator Agent", "grounded synthesis — the snippets above, nothing else",
+        f'{"fallback" if not_found else "answered"} · {timings.get("synthesis", 0):.2f}s',
+    )
+    if not_found:
         st.markdown(f"*{run['report']}*")
         st.caption(
             "Deterministic fallback: zero snippets were handed off, so this "
@@ -238,6 +286,7 @@ def render_run(run: dict) -> None:
         )
     else:
         st.markdown(run["report"])
+        _answer_actions(run)
 
 
 # ------------------------------------------------------------ run driver ---
@@ -258,7 +307,12 @@ def execute(query: str, mode: str, top_k: int) -> dict | None:
         "snippets": [], "hits": [], "report": "", "search_query": query,
         "route": "kb_query", "search_attempts": [], "timings": {},
     }
-    stage_router = st.status("**Router** — does this query need the knowledge base?", state="running")
+    # The live trace narrates the run while it happens and is then cleared:
+    # the finished run reports the same per-stage facts, and those persist
+    # when the run is reopened from the history.
+    trace = st.empty()
+    canvas = trace.container()
+    stage_router = canvas.status("**Router** — does this query need the knowledge base?", state="running")
     stage1 = None
     stage2 = None
     started = time.perf_counter()
@@ -284,13 +338,13 @@ def execute(query: str, mode: str, top_k: int) -> dict | None:
                         label="**Router** — kb_query: retrieval required",
                         state="complete",
                     )
-                    stage1 = st.status("**Stage 1 · Data Retriever** — choosing a search query and retrieving…", state="running")
+                    stage1 = canvas.status("**Stage 1 · Data Retriever** — choosing a search query and retrieving…", state="running")
             elif "direct_responder" in update:
                 run["timings"]["synthesis"] = time.perf_counter() - started
                 run.update(update["direct_responder"] or {})
             elif "data_retriever" in update:
                 if stage1 is None:
-                    stage1 = st.status("**Stage 1 · Data Retriever**", state="running")
+                    stage1 = canvas.status("**Stage 1 · Data Retriever**", state="running")
                 run["timings"]["retrieval"] = (
                     run["timings"].get("retrieval", 0) + time.perf_counter() - started
                 )
@@ -304,7 +358,7 @@ def execute(query: str, mode: str, top_k: int) -> dict | None:
                                f"{run['timings']['retrieval']:.1f}s"),
                         state="complete",
                     )
-                    stage2 = st.status("**Stage 2 · Report Generator** — synthesizing the grounded answer…", state="running")
+                    stage2 = canvas.status("**Stage 2 · Report Generator** — synthesizing the grounded answer…", state="running")
                 else:
                     stage1.update(
                         label=(f"**Stage 1 · Data Retriever** — attempt "
@@ -326,7 +380,7 @@ def execute(query: str, mode: str, top_k: int) -> dict | None:
                     )
                 run.update(update["report_generator"] or {})
                 if stage2 is None:
-                    stage2 = st.status("**Stage 2 · Report Generator**", state="running")
+                    stage2 = canvas.status("**Stage 2 · Report Generator**", state="running")
                 stage2.update(
                     label=(f"**Stage 2 · Report Generator** — answered in "
                            f"{run['timings']['synthesis']:.1f}s"),
@@ -337,7 +391,8 @@ def execute(query: str, mode: str, top_k: int) -> dict | None:
             if status is not None:
                 status.update(state="error")
         st.error(f"**Pipeline failed** ({type(exc).__name__}): {str(exc)[:400]}")
-        return None
+        return None  # the trace stays up on failure — it shows which stage broke
+    trace.empty()
     return run
 
 
@@ -391,10 +446,13 @@ with st.form("query_form", border=False):
     submitted = col_button.form_submit_button("Search", type="primary", width="stretch")
 
 query_to_run = typed.strip() if submitted and typed.strip() else None
-example_cols = st.columns(len(_EXAMPLES))
-for col, (label, example_query) in zip(example_cols, _EXAMPLES):
-    if col.button(label, key=f"ex_{label}", help=example_query, width="stretch"):
-        query_to_run = example_query
+# Chips sized to their text, on one row with their label — six full-width
+# buttons carried more visual weight than a shortcut deserves.
+with st.container(horizontal=True, vertical_alignment="center", key="chips"):
+    st.markdown('<span class="label-caps">Quick queries</span>', unsafe_allow_html=True)
+    for label, example_query in _EXAMPLES:
+        if st.button(label, key=f"ex_{label}", help=example_query, width="content"):
+            query_to_run = example_query
 
 if submitted and not typed.strip() and query_to_run is None:
     st.warning("Type a question or pick an example.")
@@ -417,6 +475,11 @@ with st.sidebar:
                 help=f"{past['query']}  ·  {past['mode']}, top_k={past['top_k']}",
             ):
                 state.active_run = i
+        if st.button("New session", key="new_session", width="stretch",
+                     help="Clear the history and start over."):
+            state.runs = []
+            state.active_run = None
+            st.rerun()
 
 if state.runs and state.active_run is not None:
     render_run(state.runs[state.active_run])
