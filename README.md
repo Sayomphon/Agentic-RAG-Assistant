@@ -111,7 +111,9 @@ python -m unittest discover -v
 Captured from `streamlit run app.py` in **hybrid** mode. Each run shows the full
 pipeline in one view: the Data Retriever's ranked evidence with scores and
 provenance badges (Stage 1), then the Report Generator's grounded answer
-(Stage 2).
+(Stage 2). Every claim in the answer ends with a citation to the section it
+came from (e.g. `[Remote Work Policy]`), so each statement is traceable to the
+evidence above it; the not-found fallback carries no citation.
 
 **“What is the policy on international travel?”** — the assignment's example
 query. All four travel sections are retrieved and merged into one structured
@@ -183,7 +185,8 @@ implicit call chain, and the pipeline extends by adding a node and an edge.
 **Retrieval guardrails, in layers.** The retriever binds its tool with
 `tool_choice="required"` and executes only the first call, so the model
 *cannot* answer from its own knowledge; the generator is prompted to use only
-the snippets; and when retrieval returns zero snippets the generator node
+the snippets and to end every claim with a `[Section Title]` citation drawn
+from the snippet headers; and when retrieval returns zero snippets the generator node
 short-circuits to a fixed not-found sentence with **no LLM call**, guaranteeing
 that fallback byte-for-byte.
 

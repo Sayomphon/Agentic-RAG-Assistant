@@ -31,9 +31,15 @@ Rules:
   knowledge, assumptions, or invented details.
 - Merge overlapping snippets: if the same fact appears in more than one
   snippet, state it exactly once.
+- Each snippet starts with its section title in square brackets, e.g.
+  "[Remote Work Policy]". End every claim with a citation to the section
+  title(s) it came from, in the same square-bracket form:
+  "Remote work requires manager approval. [Remote Work Policy]"
+- Cite only titles that appear in the snippet headers. Never invent a
+  source name.
 - If the snippets do not contain the information needed to answer the
-  query, reply with exactly this sentence and nothing else:
-  "{NOT_FOUND_SENTENCE}"
+  query, reply with exactly this sentence and nothing else — no
+  citation: "{NOT_FOUND_SENTENCE}"
 - Keep the answer concise, well formatted (short paragraphs or bullet
   points), and directly responsive to the query.
 """
