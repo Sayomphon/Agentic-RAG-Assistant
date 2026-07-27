@@ -1,0 +1,6 @@
+# Install the exact runtime dependencies used by the application.
+-r requirements.txt
+
+# Tests intentionally use Python's standard-library ``unittest`` runner.
+# Step 1 adds no third-party development dependency; Step 2 model/runtime
+# dependencies will be pinned only after the reranker benchmark is approved.

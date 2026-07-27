@@ -1,0 +1,45 @@
+{
+  "dataset_version": "lean-quality-v1",
+  "created_at": "2026-07-27",
+  "dataset_file": "src/evaluation/datasets/lean_quality_v1.json",
+  "dataset_sha256": "3f80666e6dfd77b7a668eb82c3a5dc6f79a8eed12a97988fc499bdccaf55ff3f",
+  "corpus": {
+    "algorithm": "sha256(length-prefixed-relative-path-and-bytes-v1)",
+    "sha256": "e09382f19b18ef2a52e1e93826e81852ee649d4bb5ddccb74a1865b8b60fe5c4",
+    "source_files": [
+      "knowledge_base.txt"
+    ],
+    "source_file_count": 1,
+    "section_count": 54,
+    "total_bytes": 41501
+  },
+  "embedding_model": "text-embedding-3-small",
+  "retrieval_config": {
+    "search_mode": "keyword",
+    "top_k": 4,
+    "min_score": 2.0,
+    "min_matched_terms": 2,
+    "min_relative_score": 0.55,
+    "title_boost": 1.5,
+    "min_cosine": 0.38,
+    "fusion_method": "rrf",
+    "rrf_k": 60,
+    "dense_weight": 0.5,
+    "embedding_model": "text-embedding-3-small",
+    "generator_model": "gpt-5-mini",
+    "max_search_attempts": 3
+  },
+  "case_count": 40,
+  "category_distribution": {
+    "english_answerable": 10,
+    "thai_answerable": 10,
+    "mixed_answerable": 5,
+    "negative": 10,
+    "multi_section": 5
+  },
+  "language_distribution": {
+    "en": 25,
+    "th": 10,
+    "mixed": 5
+  }
+}

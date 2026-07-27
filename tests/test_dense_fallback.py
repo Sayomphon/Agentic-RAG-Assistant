@@ -36,6 +36,15 @@ class DenseFailureBoundaryTests(unittest.TestCase):
         with self.assertRaises(EmbeddingIndexError):
             OpenAIEmbeddingRetriever(_CHUNKS, cache_dir="/nonexistent-cache")
 
+    def test_query_failure_is_counted_before_degradation(self) -> None:
+        retriever = object.__new__(OpenAIEmbeddingRetriever)
+        retriever._query_failure_count = 0
+        retriever._fallback = None
+        retriever._embed_query = Mock(side_effect=OpenAIError("API down"))
+
+        self.assertEqual(retriever.search("remote work", top_k=1), [])
+        self.assertEqual(retriever.query_failure_count, 1)
+
 
 class FactoryDegradationTests(unittest.TestCase):
     """A missing credential degrades retrieval; it never crashes the run."""

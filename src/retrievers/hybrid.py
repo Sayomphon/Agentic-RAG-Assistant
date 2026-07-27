@@ -70,6 +70,11 @@ class HybridRetriever:
         self._fusion_method = fusion_method
         self._dense_weight = min(max(0.0, dense_weight), 1.0)
 
+    @property
+    def query_failure_count(self) -> int:
+        """Expose dense-side degradation for evaluation and observability."""
+        return int(getattr(self._dense, "query_failure_count", 0))
+
     def search(self, query: str, top_k: int) -> list[ScoredChunk]:
         """Fuse gated candidates from both sides; [] when both sides say []."""
         if top_k <= 0:

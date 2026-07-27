@@ -142,6 +142,36 @@ a separate 15-query set with per-category metrics) measures all three modes
 side by side to justify mode selection. One guards against going backwards;
 the other measures which direction is forward.
 
+### Track A — Step 1 mini baseline
+
+The versioned Lean Quality dataset adds 40 cases: 10 Thai answerable,
+10 English answerable, 5 mixed Thai-English, 10 negative/unanswerable, and
+5 multi-section queries. Its manifest pins the dataset, corpus, retrieval
+configuration, and embedding model so a later quality change cannot silently
+compare itself with a different baseline.
+
+Install the pinned environment and run the no-API baseline first:
+
+```bash
+pip install -r requirements-dev.txt
+python -m src.evaluation.run_baseline --modes keyword
+```
+
+After approval to send evaluation queries and retrieved handbook snippets to
+the configured OpenAI API project, run the complete retrieval and answer
+baseline:
+
+```bash
+python -m src.evaluation.run_baseline --include-answer-eval
+```
+
+The command validates the manifest, runs the unit and keyword regression
+suites before any paid request, then writes `baseline_results.md` and
+`baseline_results.json`. The JSON report records only allowlisted runtime and
+retrieval settings; API keys, raw environment variables, prompts, and document
+bodies are excluded. Any embedding-provider failure aborts the run rather than
+misreporting a fallback result as semantic quality.
+
 ## Sample Output
 
 **End-to-end Q→A transcript:** [sample_qa_results.md](sample_qa_results.md)

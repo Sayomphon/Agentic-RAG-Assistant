@@ -96,6 +96,7 @@ class OpenAIEmbeddingRetriever:
         self._min_cosine = min_cosine
         self._model = model
         self._fallback = fallback
+        self._query_failure_count = 0
         # One client per retriever: reuses the HTTPS connection across
         # query embeddings — a fresh client per call would pay the TLS
         # handshake (~hundreds of ms) on every single query.
@@ -113,6 +114,11 @@ class OpenAIEmbeddingRetriever:
         # Bound per-instance so the memo dies with the retriever, and the
         # cache key is simply the query string.
         self._embed_query = lru_cache(maxsize=256)(self._embed_query_uncached)
+
+    @property
+    def query_failure_count(self) -> int:
+        """Number of query embedding calls that degraded after provider errors."""
+        return self._query_failure_count
 
     def _load_or_build_index(self) -> np.ndarray:
         """Return the (n_chunks, dim) unit-normalized embedding matrix."""
@@ -169,6 +175,7 @@ class OpenAIEmbeddingRetriever:
         try:
             query_vector = self._embed_query(query)
         except OpenAIError as exc:
+            self._query_failure_count += 1
             logger.warning(
                 "Query embedding failed (%s); falling back to %s.",
                 exc,

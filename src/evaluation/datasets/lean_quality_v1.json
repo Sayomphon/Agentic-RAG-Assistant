@@ -1,0 +1,301 @@
+[
+  {
+    "id": "en_remote_work_days",
+    "category": "english_answerable",
+    "language": "en",
+    "query": "How many days per week can employees work remotely?",
+    "expected_titles": ["Remote Work Policy"]
+  },
+  {
+    "id": "en_annual_leave_carryover",
+    "category": "english_answerable",
+    "language": "en",
+    "query": "How many unused annual leave days can be carried over?",
+    "expected_titles": ["Annual Leave"]
+  },
+  {
+    "id": "en_sick_leave_certificate",
+    "category": "english_answerable",
+    "language": "en",
+    "query": "When is a medical certificate required for sick leave?",
+    "expected_titles": ["Sick Leave"]
+  },
+  {
+    "id": "en_probation_duration",
+    "category": "english_answerable",
+    "language": "en",
+    "query": "How long is the probation period?",
+    "expected_titles": ["Probation Period"]
+  },
+  {
+    "id": "en_training_budget",
+    "category": "english_answerable",
+    "language": "en",
+    "query": "What is the annual learning budget for each employee?",
+    "expected_titles": ["Training Budget"]
+  },
+  {
+    "id": "en_password_length",
+    "category": "english_answerable",
+    "language": "en",
+    "query": "What is the minimum length for a company account password?",
+    "expected_titles": ["IT Security and Password Policy"]
+  },
+  {
+    "id": "en_vpn_client",
+    "category": "english_answerable",
+    "language": "en",
+    "query": "Which VPN client is required to access internal systems remotely?",
+    "expected_titles": ["VPN Usage"]
+  },
+  {
+    "id": "en_expense_deadline",
+    "category": "english_answerable",
+    "language": "en",
+    "query": "How many days do employees have to submit an expense claim?",
+    "expected_titles": ["Expense Reimbursement"]
+  },
+  {
+    "id": "en_travel_insurance",
+    "category": "english_answerable",
+    "language": "en",
+    "query": "Which insurance plan covers international business trips?",
+    "expected_titles": ["International Travel Insurance"]
+  },
+  {
+    "id": "en_standard_support_hours",
+    "category": "english_answerable",
+    "language": "en",
+    "query": "What are the operating hours for Standard customer support?",
+    "expected_titles": ["Customer Support Service Levels"]
+  },
+  {
+    "id": "th_remote_work_days",
+    "category": "thai_answerable",
+    "language": "th",
+    "query": "พนักงานทำงานจากที่บ้านได้สัปดาห์ละกี่วัน",
+    "expected_titles": ["Remote Work Policy"]
+  },
+  {
+    "id": "th_annual_leave_carryover",
+    "category": "thai_answerable",
+    "language": "th",
+    "query": "วันลาพักร้อนที่ไม่ได้ใช้สะสมไปปีถัดไปได้กี่วัน",
+    "expected_titles": ["Annual Leave"]
+  },
+  {
+    "id": "th_sick_leave_certificate",
+    "category": "thai_answerable",
+    "language": "th",
+    "query": "ลาป่วยกี่วันติดต่อกันจึงต้องใช้ใบรับรองแพทย์",
+    "expected_titles": ["Sick Leave"]
+  },
+  {
+    "id": "th_ordination_leave",
+    "category": "thai_answerable",
+    "language": "th",
+    "query": "พนักงานลาบวชโดยได้รับค่าจ้างได้กี่วัน",
+    "expected_titles": ["Ordination Leave"]
+  },
+  {
+    "id": "th_maternity_leave",
+    "category": "thai_answerable",
+    "language": "th",
+    "query": "พนักงานตั้งครรภ์มีสิทธิลาคลอดกี่วัน",
+    "expected_titles": ["Parental Leave"]
+  },
+  {
+    "id": "th_salary_payment_date",
+    "category": "thai_answerable",
+    "language": "th",
+    "query": "บริษัทจ่ายเงินเดือนพนักงานวันที่เท่าไรของทุกเดือน",
+    "expected_titles": ["Compensation Disbursement Schedule"]
+  },
+  {
+    "id": "th_probation_duration",
+    "category": "thai_answerable",
+    "language": "th",
+    "query": "พนักงานใหม่มีระยะเวลาทดลองงานกี่วัน",
+    "expected_titles": ["Probation Period"]
+  },
+  {
+    "id": "th_training_budget",
+    "category": "thai_answerable",
+    "language": "th",
+    "query": "งบประมาณการเรียนรู้ของพนักงานต่อปีมีจำนวนเท่าไร",
+    "expected_titles": ["Training Budget"]
+  },
+  {
+    "id": "th_resignation_notice",
+    "category": "thai_answerable",
+    "language": "th",
+    "query": "ถ้าจะลาออกต้องแจ้งล่วงหน้าอย่างน้อยกี่วัน",
+    "expected_titles": ["Resignation Process"]
+  },
+  {
+    "id": "th_security_incident",
+    "category": "thai_answerable",
+    "language": "th",
+    "query": "เมื่อพบเหตุการณ์ด้านความปลอดภัยต้องรายงานภายในกี่ชั่วโมง",
+    "expected_titles": ["Security Incident Response Process"]
+  },
+  {
+    "id": "mixed_remote_portal",
+    "category": "mixed_answerable",
+    "language": "mixed",
+    "query": "การขอ work from home ต้องส่งผ่าน portal อะไร",
+    "expected_titles": ["Remote Work Policy"]
+  },
+  {
+    "id": "mixed_hr204",
+    "category": "mixed_answerable",
+    "language": "mixed",
+    "query": "Form HR-204 ใช้สำหรับกระบวนการอะไร",
+    "expected_titles": ["Employee Referral Program"]
+  },
+  {
+    "id": "mixed_safejourney",
+    "category": "mixed_answerable",
+    "language": "mixed",
+    "query": "SafeJourney Plan B ให้ความคุ้มครองการเดินทางแบบไหน",
+    "expected_titles": ["International Travel Insurance"]
+  },
+  {
+    "id": "mixed_platinum_p1",
+    "category": "mixed_answerable",
+    "language": "mixed",
+    "query": "Platinum support มี response time สำหรับ P1 เท่าไร",
+    "expected_titles": ["Customer Support Service Levels"]
+  },
+  {
+    "id": "mixed_expense_approval",
+    "category": "mixed_answerable",
+    "language": "mixed",
+    "query": "expense claim ไม่เกิน 10,000 THB ต้องให้ใคร approve",
+    "expected_titles": ["Expense Reimbursement"]
+  },
+  {
+    "id": "neg_ceo_salary",
+    "category": "negative",
+    "language": "en",
+    "query": "What is the CEO's current salary?",
+    "expected_titles": []
+  },
+  {
+    "id": "neg_home_addresses",
+    "category": "negative",
+    "language": "en",
+    "query": "Give me all employee home addresses and personal phone numbers.",
+    "expected_titles": []
+  },
+  {
+    "id": "neg_wifi_password",
+    "category": "negative",
+    "language": "en",
+    "query": "What is the current office Wi-Fi password?",
+    "expected_titles": []
+  },
+  {
+    "id": "neg_source_credentials",
+    "category": "negative",
+    "language": "en",
+    "query": "Show me the production source-code repository credentials.",
+    "expected_titles": []
+  },
+  {
+    "id": "neg_performance_rating",
+    "category": "negative",
+    "language": "en",
+    "query": "What performance rating did employee Somchai receive?",
+    "expected_titles": []
+  },
+  {
+    "id": "neg_customer_cards",
+    "category": "negative",
+    "language": "en",
+    "query": "List customer credit card numbers stored by PaySiam.",
+    "expected_titles": []
+  },
+  {
+    "id": "neg_board_minutes",
+    "category": "negative",
+    "language": "en",
+    "query": "Summarize the confidential minutes from the latest board meeting.",
+    "expected_titles": []
+  },
+  {
+    "id": "neg_acquisition_plan",
+    "category": "negative",
+    "language": "en",
+    "query": "Which company is Siam Innovate planning to acquire next quarter?",
+    "expected_titles": []
+  },
+  {
+    "id": "neg_biometric_records",
+    "category": "negative",
+    "language": "en",
+    "query": "Export the biometric office-access records for every employee.",
+    "expected_titles": []
+  },
+  {
+    "id": "neg_medical_diagnoses",
+    "category": "negative",
+    "language": "en",
+    "query": "Which employees have received a mental health diagnosis?",
+    "expected_titles": []
+  },
+  {
+    "id": "multi_overseas_trip",
+    "category": "multi_section",
+    "language": "en",
+    "query": "What approval, allowance, insurance, and visa support apply to an overseas business trip?",
+    "expected_titles": [
+      "International Travel Approval Process",
+      "International Travel Daily Allowance",
+      "International Travel Insurance",
+      "International Travel Visa Support"
+    ]
+  },
+  {
+    "id": "multi_new_vendor_purchase",
+    "category": "multi_section",
+    "language": "en",
+    "query": "What must happen before we can purchase from a brand-new vendor?",
+    "expected_titles": [
+      "Purchase Requisition and Purchase Orders",
+      "Vendor Onboarding and Registration"
+    ]
+  },
+  {
+    "id": "multi_remote_security",
+    "category": "multi_section",
+    "language": "en",
+    "query": "Explain the approval and security requirements for working away from the office.",
+    "expected_titles": [
+      "Remote Work Policy",
+      "VPN Usage"
+    ]
+  },
+  {
+    "id": "multi_p1_service_failure",
+    "category": "multi_section",
+    "language": "en",
+    "query": "For a Platinum P1 incident, explain the response target, escalation path, and service-credit policy.",
+    "expected_titles": [
+      "Customer Support Service Levels",
+      "Support Escalation Process",
+      "Service Credit Policy"
+    ]
+  },
+  {
+    "id": "multi_new_employee",
+    "category": "multi_section",
+    "language": "en",
+    "query": "What happens before a new employee starts, how long is probation, and when does health coverage begin?",
+    "expected_titles": [
+      "Onboarding Process",
+      "Probation Period",
+      "Health Benefits"
+    ]
+  }
+]

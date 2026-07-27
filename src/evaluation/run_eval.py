@@ -27,6 +27,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Iterable, Mapping, Sequence
 
 from src.config import (
     EMBEDDING_MODEL,
@@ -43,7 +44,7 @@ from src.retrievers.hybrid import HybridRetriever
 from src.retrievers.keyword import BM25Retriever
 
 RESULTS_PATH = Path("evaluation_results.md")
-CATEGORIES = ("lexical", "semantic", "multi_chunk", "negative")
+SUPPORTED_MODES = ("keyword", "semantic", "hybrid")
 
 
 @dataclass(frozen=True)
@@ -81,25 +82,43 @@ class CaseResult:
         return not self.expected and bool(self.retrieved)
 
 
-def build_retrievers() -> dict[str, Retriever]:
-    """Construct per-mode retrievers with isolated instances (see module doc)."""
+def build_retrievers(
+    modes: Iterable[str] = SUPPORTED_MODES,
+) -> dict[str, Retriever]:
+    """Construct requested retrievers with isolated instances (see module doc)."""
+    requested = tuple(dict.fromkeys(modes))
+    invalid = sorted(set(requested) - set(SUPPORTED_MODES))
+    if invalid:
+        raise ValueError(f"Unsupported retrieval mode(s): {', '.join(invalid)}")
+    if not requested:
+        raise ValueError("At least one retrieval mode is required.")
+
     chunks = load_chunks()
-    return {
-        "keyword": BM25Retriever(chunks),
-        "semantic": OpenAIEmbeddingRetriever(chunks),
-        "hybrid": HybridRetriever(
-            BM25Retriever(chunks), OpenAIEmbeddingRetriever(chunks)
-        ),
-    }
+    retrievers: dict[str, Retriever] = {}
+    for mode in requested:
+        if mode == "keyword":
+            retrievers[mode] = BM25Retriever(chunks)
+        elif mode == "semantic":
+            retrievers[mode] = OpenAIEmbeddingRetriever(chunks)
+        else:
+            retrievers[mode] = HybridRetriever(
+                BM25Retriever(chunks), OpenAIEmbeddingRetriever(chunks)
+            )
+    return retrievers
 
 
-def evaluate_mode(retriever: Retriever) -> list[CaseResult]:
+def evaluate_mode(
+    retriever: Retriever,
+    test_set: Sequence[Mapping[str, object]] = TEST_SET,
+    *,
+    top_k: int = TOP_K,
+) -> list[CaseResult]:
     """Run every test case against one retriever."""
     results = []
-    for case in TEST_SET:
+    for case in test_set:
         query = str(case["query"])
         started = time.perf_counter()
-        hits = retriever.search(query, top_k=TOP_K)
+        hits = retriever.search(query, top_k=top_k)
         latency_ms = (time.perf_counter() - started) * 1000
         results.append(
             CaseResult(
@@ -170,7 +189,9 @@ def overall_table(all_results: dict[str, list[CaseResult]]) -> str:
 def category_table(all_results: dict[str, list[CaseResult]]) -> str:
     header = ["category", "n", "metric", *all_results.keys()]
     rows = []
-    for category in CATEGORIES:
+    first_mode_results = next(iter(all_results.values()))
+    categories = tuple(dict.fromkeys(result.category for result in first_mode_results))
+    for category in categories:
         per_mode = {
             mode: [r for r in results if r.category == category]
             for mode, results in all_results.items()
