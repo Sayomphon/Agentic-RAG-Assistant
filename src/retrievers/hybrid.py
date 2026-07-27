@@ -22,12 +22,8 @@ because unfounded snippets would invite the generator to hallucinate.
 
 from __future__ import annotations
 
-from src.config import DENSE_WEIGHT, FUSION_METHOD, RRF_K
+from src.config import CANDIDATE_K, DENSE_WEIGHT, FUSION_METHOD, RRF_K
 from src.retrievers.base import Retriever, ScoredChunk
-
-# Fetch more than top_k from each side so fusion has real choices: a chunk
-# ranked 5th by both retrievers can still beat one ranked 1st by only one.
-_CANDIDATE_MULTIPLIER = 3
 
 
 class HybridRetriever:
@@ -44,6 +40,7 @@ class HybridRetriever:
         self,
         keyword: Retriever,
         dense: Retriever,
+        candidate_k: int = CANDIDATE_K,
         rrf_k: int = RRF_K,
         fusion_method: str = FUSION_METHOD,
         dense_weight: float = DENSE_WEIGHT,
@@ -53,6 +50,8 @@ class HybridRetriever:
         Args:
             keyword: Lexical side (BM25), with its own relevance gates.
             dense: Semantic side, with its own ``MIN_COSINE`` gate.
+            candidate_k: Candidate count requested from each side before
+                fusion. Final ``top_k`` remains the caller-owned result cap.
             rrf_k: RRF dampening constant; 60 is the standard from the
                 original RRF paper and needs no per-corpus tuning.
             fusion_method: ``"rrf"`` (default) or ``"weighted"``.
@@ -66,6 +65,7 @@ class HybridRetriever:
             )
         self._keyword = keyword
         self._dense = dense
+        self._candidate_k = max(1, candidate_k)
         self._rrf_k = rrf_k
         self._fusion_method = fusion_method
         self._dense_weight = min(max(0.0, dense_weight), 1.0)
@@ -79,7 +79,11 @@ class HybridRetriever:
         """Fuse gated candidates from both sides; [] when both sides say []."""
         if top_k <= 0:
             return []
-        pool_size = top_k * _CANDIDATE_MULTIPLIER
+        # Candidate expansion is independent from the final result cap. This
+        # gives fusion (and the optional outer reranker) a stable, tunable
+        # pool while preserving the Retriever contract when a caller asks for
+        # more than the configured default.
+        pool_size = max(top_k, self._candidate_k)
         candidate_lists = [
             self._keyword.search(query, pool_size),
             self._dense.search(query, pool_size),

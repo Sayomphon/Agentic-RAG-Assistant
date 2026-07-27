@@ -10,17 +10,21 @@ from __future__ import annotations
 import heapq
 import re
 
+from pythainlp.tokenize import word_tokenize
 from rank_bm25 import BM25Okapi
 
 from src.config import (
     MIN_MATCHED_TERMS,
     MIN_RELATIVE_SCORE,
     MIN_SCORE,
+    THAI_TOKENIZER_ENABLED,
     TITLE_BOOST,
 )
 from src.retrievers.base import Chunk, ScoredChunk
 
-_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+_ENGLISH_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+_SCRIPT_RUN_PATTERN = re.compile(r"[a-z0-9]+|[\u0e00-\u0e7f]+")
+_HAS_THAI = re.compile(r"[\u0e00-\u0e7f]")
 _QUERY_ALIASES = (
     (re.compile(r"\b(?:work|working)\s+from\s+home\b"), "remote work"),
     (re.compile(r"\bwfh\b"), "remote work"),
@@ -116,10 +120,39 @@ def _light_stem(token: str) -> str:
     return token
 
 
-def _tokenize(text: str) -> list[str]:
-    """Normalize text into content-bearing English search terms."""
-    tokens = (_light_stem(token) for token in _TOKEN_PATTERN.findall(text.lower()))
+def _tokenize_english(text: str) -> list[str]:
+    """Normalize English text into content-bearing lexical terms."""
+    tokens = (
+        _light_stem(token)
+        for token in _ENGLISH_TOKEN_PATTERN.findall(text.lower())
+    )
     return [token for token in tokens if token and token not in _STOP_WORDS]
+
+
+def _tokenize_thai(text: str) -> list[str]:
+    """Segment one Thai script run without loading a network-backed model."""
+    if not THAI_TOKENIZER_ENABLED:
+        return []
+    return [
+        token.strip()
+        for token in word_tokenize(
+            text,
+            engine="newmm",
+            keep_whitespace=False,
+        )
+        if token.strip()
+    ]
+
+
+def _tokenize(text: str) -> list[str]:
+    """Normalize mixed Thai-English text while preserving script-run order."""
+    tokens: list[str] = []
+    for run in _SCRIPT_RUN_PATTERN.findall(text.lower()):
+        if _HAS_THAI.search(run):
+            tokens.extend(_tokenize_thai(run))
+        else:
+            tokens.extend(_tokenize_english(run))
+    return tokens
 
 
 def _normalize_query(query: str) -> list[str]:
@@ -136,8 +169,16 @@ def _normalize_query(query: str) -> list[str]:
 
 
 def has_english_search_terms(query: str) -> bool:
-    """Return whether deterministic lexical retrieval can search the query."""
-    return bool(_normalize_query(query))
+    """Return whether the agent can preserve English query wording.
+
+    Thai lexical tokens intentionally do not count here: a Thai-only query
+    still needs the Retriever Agent's English translation because the current
+    handbook corpus is English.
+    """
+    normalized = query.lower()
+    for pattern, replacement in _QUERY_ALIASES:
+        normalized = pattern.sub(replacement, normalized)
+    return bool(_tokenize_english(normalized))
 
 
 class BM25Retriever:

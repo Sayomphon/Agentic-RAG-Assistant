@@ -2,5 +2,5 @@
 -r requirements.txt
 
 # Tests intentionally use Python's standard-library ``unittest`` runner.
-# Step 1 adds no third-party development dependency; Step 2 model/runtime
-# dependencies will be pinned only after the reranker benchmark is approved.
+# Track A runtime dependencies, including Thai tokenization and local
+# reranking, are pinned in requirements.txt so every environment is identical.

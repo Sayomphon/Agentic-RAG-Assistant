@@ -37,7 +37,7 @@ flowchart TB
     T --> F{{"get_retriever(mode)"}}
     F --> K["keyword · BM25<br/>title boost + term/score gates"]
     F --> S["semantic · embeddings<br/>cosine ≥ MIN_COSINE, cached"]
-    F --> H["hybrid · RRF fusion<br/>gate each side, merge by rank"]
+    F --> H["hybrid · candidate expansion + RRF<br/>local reranker + context builder"]
     H -. "reuses both indexes" .-> K
     H -.-> S
     K & S & H --> KB[("knowledge_base.txt<br/>54 sections")]
@@ -84,7 +84,9 @@ rewrite can never be silently overridden back to the original wording.
     │   ├── base.py           # Chunk, ScoredChunk, Retriever protocol, load_chunks
     │   ├── keyword.py        # title-aware BM25 + lexical gates
     │   ├── dense.py          # OpenAI embeddings + content-addressed disk cache
-    │   ├── hybrid.py         # RRF (and weighted) fusion over both sides
+    │   ├── hybrid.py         # candidate expansion + rank fusion
+    │   ├── reranker.py       # lazy local multilingual cross-encoder + fallback
+    │   ├── context.py        # dedup, diversity, and strict context budget
     │   └── factory.py        # get_retriever(mode): cached, lazy, keyword-fallback
     ├── agents/               # router, retriever, query rewriter, reporter nodes
     └── evaluation/           # regression suite + comparative benchmark + run_qa
@@ -141,6 +143,30 @@ drops evidence fails CI-style; the **comparative benchmark** (`run_eval.py`,
 a separate 15-query set with per-category metrics) measures all three modes
 side by side to justify mode selection. One guards against going backwards;
 the other measures which direction is forward.
+
+### Track A — Step 2 quality path
+
+Hybrid mode now retrieves `CANDIDATE_K` candidates from each retrieval side,
+fuses them, reranks the combined pool locally with the pinned multilingual
+`BAAI/bge-reranker-v2-m3` revision, and hands only `TOP_K` diverse,
+budget-bounded snippets to the generator. The model loads on the first hybrid
+query; remote model code is disabled, inference is serialized to bound RAM,
+weights are cached under `.cache/reranker`, and timeout/load/inference
+failures preserve the original fusion order.
+
+Before serving hybrid traffic in a fresh environment, prefetch and validate
+the pinned local snapshot without sending any knowledge-base content:
+
+```bash
+python -m src.retrievers.reranker
+```
+
+`RERANKER_MIN_SCORE` is intentionally blank by default. Set it only after
+measuring the pinned model and dataset; when configured, candidates below the
+threshold are rejected before generation. `MIN_COSINE` remains the dense-side
+gate. Thai-only queries still use the Retriever Agent's English translation
+for the current English-only handbook, while BM25 itself now safely tokenizes
+Thai and mixed-script corpora with PyThaiNLP.
 
 ### Track A — Step 1 mini baseline
 

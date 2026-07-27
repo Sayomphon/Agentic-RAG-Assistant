@@ -12,12 +12,14 @@ reinforces intent and guides query reformulation.
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents import get_llm
 from src.config import TOP_K
+from src.retrievers.context import ContextBuilder
 from src.tools.retrieval import has_english_search_terms, search_knowledge_base
 
 if TYPE_CHECKING:
@@ -40,6 +42,12 @@ Rules:
 - NEVER summarize, rewrite, filter, or add to the retrieved snippets.
 - The raw snippets returned by the tool are the only output that matters.
 """
+
+
+@lru_cache(maxsize=1)
+def _context_builder() -> ContextBuilder:
+    """Build one immutable, process-wide context policy."""
+    return ContextBuilder()
 
 
 def _select_search_query(user_query: str, tool_args: dict[str, object]) -> str:
@@ -125,9 +133,10 @@ def retriever_node(state: PipelineState) -> dict[str, object]:
             "mode": state.get("search_mode"),
         }
     )[:top_k]
+    context = _context_builder().build(hits)
     return {
-        "snippets": [hit.as_snippet() for hit in hits],
-        "hits": hits,
+        "snippets": list(context.snippets),
+        "hits": list(context.hits),
         "search_query": search_query,
         "search_attempts": [*attempts, search_query],
         "rewritten_query": "",

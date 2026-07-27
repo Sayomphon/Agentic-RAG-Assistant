@@ -18,6 +18,7 @@ from src.retrievers import factory
 from src.retrievers.base import Chunk
 from src.retrievers.dense import EmbeddingIndexError, OpenAIEmbeddingRetriever
 from src.retrievers.keyword import BM25Retriever
+from src.retrievers.reranker import RerankingRetriever
 
 _CHUNKS = [Chunk(title="T0", text="remote work requires approval", index=0)]
 
@@ -66,6 +67,18 @@ class FactoryDegradationTests(unittest.TestCase):
         # Plain BM25, not a fusion wrapper around it — so the lexical
         # evidence is counted once, not once per fused side.
         self.assertIsInstance(factory.get_retriever("hybrid"), BM25Retriever)
+
+    @patch("src.retrievers.dense.OpenAIEmbeddingRetriever")
+    def test_successful_hybrid_mode_adds_reranking_and_preserves_identity(
+        self,
+        mock_dense: Mock,
+    ) -> None:
+        mock_dense.return_value = Mock()
+
+        retriever = factory.get_retriever("hybrid")
+
+        self.assertIsInstance(retriever, RerankingRetriever)
+        self.assertEqual(retriever.SOURCE, "hybrid")
 
 
 if __name__ == "__main__":

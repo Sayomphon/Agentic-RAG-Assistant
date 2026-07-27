@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 from functools import lru_cache
 
-from src.config import SEARCH_MODE
+from src.config import RERANKER_ENABLED, SEARCH_MODE
 from src.retrievers.base import Chunk, Retriever, load_chunks
 from src.retrievers.keyword import BM25Retriever
 
@@ -94,4 +94,13 @@ def _build_retriever(mode: str) -> Retriever:
 
     if mode == "semantic":
         return dense
-    return HybridRetriever(keyword, dense)
+    hybrid = HybridRetriever(keyword, dense)
+    if not RERANKER_ENABLED:
+        return hybrid
+
+    from src.retrievers.reranker import (
+        LocalCrossEncoderReranker,
+        RerankingRetriever,
+    )
+
+    return RerankingRetriever(hybrid, LocalCrossEncoderReranker())

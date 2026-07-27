@@ -11,12 +11,15 @@ touch the OpenAI client.
 """
 
 from src.retrievers.base import Chunk, Retriever, ScoredChunk, load_chunks
+from src.retrievers.context import BuiltContext, ContextBuilder
 from src.retrievers.factory import get_retriever
 from src.retrievers.keyword import BM25Retriever, has_english_search_terms
 
 __all__ = [
     "BM25Retriever",
+    "BuiltContext",
     "Chunk",
+    "ContextBuilder",
     "Retriever",
     "ScoredChunk",
     "get_retriever",

@@ -48,11 +48,17 @@ class ScoredChunk:
     The metadata exists for evaluation and UI layers — ``score`` explains
     ranking decisions, ``source`` records which retriever produced the hit
     (``"bm25"``, ``"dense"``, or ``"bm25+dense"`` after hybrid fusion).
+    After local reranking, ``score`` is the effective reranker score,
+    ``retrieval_score`` retains the pre-rerank value, and ``reranker_score``
+    makes the answerability gate auditable. Both optional fields preserve
+    backward compatibility for non-reranked hits.
     """
 
     chunk: Chunk
     score: float
     source: str
+    retrieval_score: float | None = None
+    reranker_score: float | None = None
 
     @property
     def title(self) -> str:
