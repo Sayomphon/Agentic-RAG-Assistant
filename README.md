@@ -249,6 +249,33 @@ retrieval settings; API keys, raw environment variables, prompts, and document
 bodies are excluded. Any embedding-provider failure aborts the run rather than
 misreporting a fallback result as semantic quality.
 
+### Track A closure — R1 comparative baseline
+
+R1 reconstructs the historical runtime at commit `5e8537b` in a detached
+worktree and evaluates Keyword, Semantic, and Hybrid retrieval at both the
+historical default `TOP_K=4` and the controlled `TOP_K=6`. The resulting
+[`track_a_pre_upgrade_baseline_v2.md`](track_a_pre_upgrade_baseline_v2.md)
+compares those profiles with the frozen post-Track-A Phase 0 evidence without
+modifying any historical artifact.
+
+After creating a separate virtual environment inside the detached worktree,
+run the official comparison from a clean remediation branch:
+
+```bash
+venv/bin/python -m src.evaluation.run_track_a_closure \
+  --run-r1 \
+  --legacy-worktree <detached-worktree> \
+  --legacy-python <detached-worktree>/venv/bin/python \
+  --allow-query-embeddings
+```
+
+The explicit approval permits only the 40 evaluation queries to reach the
+configured OpenAI Embeddings project. R1 requires the existing
+content-addressed corpus cache and refuses to rebuild corpus embeddings. The
+runner also rejects dirty worktrees, mismatched commits or hashes, provider
+failures, fallbacks, duplicate JSON keys, raw queries, document bodies,
+prompts, credentials, and attempts to overwrite the v2 artifact.
+
 ### Enterprise Track — Phase 0 baseline and contract freeze
 
 Phase 0 freezes the post-Track-A system before Qdrant or ACL work begins. It
