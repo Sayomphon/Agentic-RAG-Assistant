@@ -9,15 +9,22 @@ provider error escaping into the pipeline.
 
 from __future__ import annotations
 
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
+import numpy as np
 from openai import OpenAIError
 
 from src.config import HYBRID_MIN_COSINE, MIN_COSINE
 from src.retrievers import factory
 from src.retrievers.base import Chunk
-from src.retrievers.dense import EmbeddingIndexError, OpenAIEmbeddingRetriever
+from src.retrievers.dense import (
+    EmbeddingIndexError,
+    OpenAIEmbeddingRetriever,
+    embedding_cache_path,
+    has_usable_embedding_cache,
+)
 from src.retrievers.keyword import BM25Retriever
 from src.retrievers.reranker import RerankingRetriever
 
@@ -46,6 +53,26 @@ class DenseFailureBoundaryTests(unittest.TestCase):
 
         self.assertEqual(retriever.search("remote work", top_k=1), [])
         self.assertEqual(retriever.query_failure_count, 1)
+
+    def test_cache_readiness_returns_a_json_safe_python_bool(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            cache_path = embedding_cache_path(
+                _CHUNKS,
+                cache_dir=directory,
+            )
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            np.savez_compressed(
+                cache_path,
+                embeddings=np.array([[1.0, 0.0]], dtype=np.float32),
+            )
+
+            ready = has_usable_embedding_cache(
+                _CHUNKS,
+                cache_dir=directory,
+            )
+
+        self.assertIs(type(ready), bool)
+        self.assertTrue(ready)
 
 
 class FactoryDegradationTests(unittest.TestCase):

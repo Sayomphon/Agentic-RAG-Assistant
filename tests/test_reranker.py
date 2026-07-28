@@ -135,6 +135,26 @@ class LocalRerankerTests(unittest.TestCase):
 
 
 class RerankingRetrieverTests(unittest.TestCase):
+    def test_warmup_delegates_without_running_inference(self) -> None:
+        backend = _Backend([1.0])
+        loads = 0
+
+        def factory() -> _Backend:
+            nonlocal loads
+            loads += 1
+            return backend
+
+        retriever = RerankingRetriever(
+            _BaseRetriever([_hit(0)]),
+            LocalCrossEncoderReranker(model_factory=factory),
+        )
+
+        retriever.warmup()
+        retriever.warmup()
+
+        self.assertEqual(loads, 1)
+        self.assertEqual(backend.calls, 0)
+
     def test_retrieves_candidates_before_reranking(self) -> None:
         base = _BaseRetriever([_hit(index) for index in range(10)])
         backend = _Backend([float(index) for index in range(6)])

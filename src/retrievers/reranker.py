@@ -317,6 +317,12 @@ class RerankingRetriever:
         with self._metrics_lock:
             return self._answerability_rejection_count
 
+    def warmup(self) -> None:
+        """Load an optional local backend before measuring query latency."""
+        warmup = getattr(self._reranker, "warmup", None)
+        if callable(warmup):
+            warmup()
+
     def search(self, query: str, top_k: int) -> list[ScoredChunk]:
         if top_k <= 0:
             return []

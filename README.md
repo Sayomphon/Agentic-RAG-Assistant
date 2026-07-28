@@ -249,6 +249,68 @@ retrieval settings; API keys, raw environment variables, prompts, and document
 bodies are excluded. Any embedding-provider failure aborts the run rather than
 misreporting a fallback result as semantic quality.
 
+### Enterprise Track — Phase 0 baseline and contract freeze
+
+Phase 0 freezes the post-Track-A system before Qdrant or ACL work begins. It
+reuses the 40 reviewed Thai/English/mixed/negative/multi-section cases, but
+creates an independent Enterprise manifest that fingerprints the corpus,
+source and tests, dependency/config templates, complete non-secret runtime
+configuration, model revisions, and Retriever contract version.
+
+The normative interface and failure policy are in
+[`docs/RETRIEVER_CONTRACT.md`](docs/RETRIEVER_CONTRACT.md). Every current and
+future backend must pass the shared contract matrix:
+
+```bash
+venv/bin/python -m unittest tests.test_retriever_contract -v
+```
+
+The frozen manifest is initialized only when creating a new reviewed baseline.
+Before closing Phase 0, run the strict reproduction gate; normal evaluation
+runs perform the same strict comparison and refuse to overwrite the manifest:
+
+```bash
+venv/bin/python -m src.evaluation.run_phase0 --initialize-manifest
+venv/bin/python -m src.evaluation.run_phase0 --verify-manifest-only
+venv/bin/python -m src.evaluation.run_phase0
+```
+
+After Phase 1 begins, current source bytes are expected to differ. Regular
+unit tests therefore validate the historical manifest's schema, hashes,
+security policy, and equality with the embedded report copy without comparing
+it to the current source tree. `--verify-manifest-only` remains intentionally
+strict and should fail outside the original Phase 0 checkpoint; do not update
+or overwrite the Phase 0 manifest to make a later phase pass.
+
+The default run is keyword-only and makes no API request. A comparative
+runtime baseline is explicitly opt-in:
+
+```bash
+venv/bin/python -m src.evaluation.run_phase0 \
+  --modes keyword semantic hybrid \
+  --allow-query-embeddings
+```
+
+That flag permits evaluation query strings to reach OpenAI Embeddings. If the
+content-addressed corpus embedding cache is missing or invalid, the runner
+still fails closed; rebuilding it requires the separate
+`--allow-corpus-embeddings` approval. Answer-level evaluation is also separate
+because it sends retrieved snippets and generated answers:
+
+```bash
+venv/bin/python -m src.evaluation.run_phase0 \
+  --modes keyword semantic hybrid \
+  --allow-query-embeddings \
+  --include-answer-eval
+```
+
+Successful runs write `phase0_baseline_results.md` and
+`phase0_baseline_results.json`. Reports contain case IDs, expected/retrieved
+titles, metrics, latency, backend health, and allowlisted environment metadata;
+they exclude raw queries, document bodies, prompts, environment variables, and
+secrets. Any provider or reranker fallback invalidates the run instead of being
+misreported as a healthy baseline.
+
 ## Sample Output
 
 **End-to-end Q→A transcript:** [sample_qa_results.md](sample_qa_results.md)

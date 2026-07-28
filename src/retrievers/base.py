@@ -10,11 +10,12 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from src.config import KB_PATH
 
 _SECTION_PATTERN = re.compile(r"^--- (?P<title>.+?) ---$", re.MULTILINE)
+RETRIEVER_CONTRACT_VERSION = "1.0.0"
 
 
 @dataclass(frozen=True)
@@ -81,11 +82,20 @@ class ScoredChunk:
         return self.chunk.as_snippet()
 
 
+@runtime_checkable
 class Retriever(Protocol):
-    """Contract for every retrieval implementation (keyword, dense, hybrid)."""
+    """Stable contract for every retrieval implementation.
+
+    Normative behavior is frozen in ``docs/RETRIEVER_CONTRACT.md`` and the
+    contract test suite. Implementations must treat ``top_k`` as a hard result
+    cap, return no result for empty/non-searchable input or non-positive
+    ``top_k``, preserve provenance, and rank best-first. Backend-specific
+    initialization errors and documented query-time degradation remain visible
+    at their existing factory/telemetry boundaries.
+    """
 
     def search(self, query: str, top_k: int) -> list[ScoredChunk]:
-        """Return up to ``top_k`` relevant chunks with scores, best first."""
+        """Return at most ``top_k`` relevant, best-first scored chunks."""
         ...
 
 

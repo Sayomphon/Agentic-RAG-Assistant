@@ -37,6 +37,44 @@ class EmbeddingIndexError(RuntimeError):
     """Raised when the embedding index cannot be built (no key, API down)."""
 
 
+def embedding_cache_path(
+    chunks: list[Chunk],
+    *,
+    model: str = EMBEDDING_MODEL,
+    cache_dir: str = EMBEDDING_CACHE_DIR,
+) -> Path:
+    """Return the content-addressed cache path without calling a provider."""
+    fingerprint = hashlib.sha256(
+        "\x00".join([model, *(chunk.as_snippet() for chunk in chunks)]).encode(
+            "utf-8"
+        )
+    ).hexdigest()[:16]
+    return Path(cache_dir) / f"embeddings-{fingerprint}.npz"
+
+
+def has_usable_embedding_cache(
+    chunks: list[Chunk],
+    *,
+    model: str = EMBEDDING_MODEL,
+    cache_dir: str = EMBEDDING_CACHE_DIR,
+) -> bool:
+    """Return whether a safe, shape-compatible cached matrix exists."""
+    path = embedding_cache_path(chunks, model=model, cache_dir=cache_dir)
+    if not path.is_file():
+        return False
+    try:
+        with np.load(path, allow_pickle=False) as archive:
+            matrix = archive["embeddings"]
+    except (OSError, KeyError, ValueError):
+        return False
+    return bool(
+        matrix.ndim == 2
+        and matrix.shape[0] == len(chunks)
+        and matrix.shape[1] > 0
+        and np.isfinite(matrix).all()
+    )
+
+
 def _build_client() -> OpenAI:
     """Construct the OpenAI client inside the index-build error boundary.
 
@@ -105,10 +143,11 @@ class OpenAIEmbeddingRetriever:
 
         # Content-addressed cache key: any change to the KB text (or the
         # embedding model) changes the hash, forcing an automatic rebuild.
-        fingerprint = hashlib.sha256(
-            "\x00".join([model, *(c.as_snippet() for c in chunks)]).encode("utf-8")
-        ).hexdigest()[:16]
-        self._cache_path = Path(cache_dir) / f"embeddings-{fingerprint}.npz"
+        self._cache_path = embedding_cache_path(
+            chunks,
+            model=model,
+            cache_dir=cache_dir,
+        )
 
         self._matrix = self._load_or_build_index()
         # Bound per-instance so the memo dies with the retriever, and the
@@ -123,13 +162,22 @@ class OpenAIEmbeddingRetriever:
     def _load_or_build_index(self) -> np.ndarray:
         """Return the (n_chunks, dim) unit-normalized embedding matrix."""
         if self._cache_path.is_file():
-            matrix = np.load(self._cache_path)["embeddings"]
-            if matrix.shape[0] == len(self._chunks):
-                logger.info("Embedding cache hit: %s", self._cache_path)
-                return matrix
+            try:
+                with np.load(self._cache_path, allow_pickle=False) as archive:
+                    matrix = archive["embeddings"]
+                if (
+                    matrix.ndim == 2
+                    and matrix.shape[0] == len(self._chunks)
+                    and matrix.shape[1] > 0
+                    and np.isfinite(matrix).all()
+                ):
+                    logger.info("Embedding cache hit: %s", self._cache_path)
+                    return matrix
+            except (OSError, KeyError, ValueError):
+                pass
             # A hash collision this shape mismatch implies is practically
-            # impossible; treat defensively and rebuild.
-            logger.warning("Embedding cache shape mismatch; rebuilding index.")
+            # impossible; corruption or a legacy format is more likely.
+            logger.warning("Embedding cache is invalid; rebuilding index.")
 
         texts = [chunk.as_snippet() for chunk in self._chunks]
         try:
