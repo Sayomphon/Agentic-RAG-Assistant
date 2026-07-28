@@ -107,8 +107,8 @@ def _build_retriever(mode: str) -> Retriever:
         return hybrid
 
     from src.retrievers.reranker import (
-        LocalCrossEncoderReranker,
         RerankingRetriever,
+        build_cascading_reranker,
     )
 
-    return RerankingRetriever(hybrid, LocalCrossEncoderReranker())
+    return RerankingRetriever(hybrid, build_cascading_reranker())

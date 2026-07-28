@@ -6,6 +6,7 @@ import math
 import re
 import unittest
 from dataclasses import fields
+from pathlib import Path
 from unittest.mock import Mock
 
 import numpy as np
@@ -140,6 +141,19 @@ class RetrieverContractTests(unittest.TestCase):
             with self.subTest(retriever=name):
                 self.assertIsInstance(retriever, Retriever)
 
+    def test_normative_contract_documents_the_r2_fail_safe_policy(self) -> None:
+        contract_path = (
+            Path(__file__).resolve().parents[1]
+            / "docs"
+            / "RETRIEVER_CONTRACT.md"
+        )
+        contract = contract_path.read_text(encoding="utf-8")
+
+        self.assertIn("Primary reranker", contract)
+        self.assertIn("Secondary reranker", contract)
+        self.assertIn("production-default `fail_closed`", contract)
+        self.assertIn("raw exception details", contract)
+
     def test_scored_chunk_required_fields_are_stable(self) -> None:
         self.assertEqual(
             [field.name for field in fields(ScoredChunk)],
@@ -197,7 +211,7 @@ class RetrieverContractTests(unittest.TestCase):
         self.assertEqual(dense.query_failure_count, 1)
         self.assertEqual(hits[0].source, "bm25")
 
-    def test_reranker_failure_preserves_base_order_and_cap(self) -> None:
+    def test_reranker_failure_fails_closed_without_breaking_contract(self) -> None:
         base_hits = [_hit(9, 0.9, "hybrid"), _hit(10, 0.8, "hybrid")]
         base = _StaticRetriever(base_hits)
         failing_reranker = Mock()
@@ -210,8 +224,9 @@ class RetrieverContractTests(unittest.TestCase):
 
         hits = retriever.search("fallback query", top_k=1)
 
-        self.assertEqual(hits, base_hits[:1])
+        self.assertEqual(hits, [])
         self.assertEqual(retriever.reranker_fallback_count, 1)
+        self.assertEqual(retriever.fail_closed_count, 1)
 
 
 if __name__ == "__main__":

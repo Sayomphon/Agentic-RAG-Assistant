@@ -9,6 +9,8 @@ Intended responsibility:
 
 import math
 import os
+import re
+from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
@@ -45,6 +47,75 @@ def _env_optional_float(
     return value
 
 
+def _env_choice(name: str, default: str, allowed: frozenset[str]) -> str:
+    """Read and validate one case-insensitive enumerated setting."""
+    value = os.getenv(name, default).strip().lower()
+    if value not in allowed:
+        choices = ", ".join(sorted(allowed))
+        raise ValueError(f"{name} must be one of {choices}; received {value!r}.")
+    return value
+
+
+def _env_revision(name: str, default: str) -> str:
+    """Require an immutable 40-character Git commit for remote model loads."""
+    value = os.getenv(name, default).strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{40}", value):
+        raise ValueError(
+            f"{name} must be a full 40-character hexadecimal commit SHA."
+        )
+    return value
+
+
+@dataclass(frozen=True)
+class RetrievalProfile:
+    """Named, reviewable retrieval settings applied before env overrides."""
+
+    search_mode: str
+    candidate_k: int
+    top_k: int
+    hybrid_min_cosine: float
+    reranker_min_score: float | None
+    reranker_batch_size: int
+    reranker_timeout_seconds: float
+    max_context_chars: int
+    reranker_failure_policy: str
+
+
+_RETRIEVAL_PROFILES = {
+    # Importing/running the code without a .env file remains offline-safe.
+    "keyword_safe": RetrievalProfile(
+        search_mode="keyword",
+        candidate_k=12,
+        top_k=6,
+        hybrid_min_cosine=0.20,
+        reranker_min_score=0.01,
+        reranker_batch_size=4,
+        reranker_timeout_seconds=10.0,
+        max_context_chars=6_000,
+        reranker_failure_policy="fail_closed",
+    ),
+    # Official Track A settings selected by the versioned Step 3 evidence.
+    "track_a_balanced_v1": RetrievalProfile(
+        search_mode="hybrid",
+        candidate_k=12,
+        top_k=6,
+        hybrid_min_cosine=0.20,
+        reranker_min_score=0.01,
+        reranker_batch_size=4,
+        reranker_timeout_seconds=10.0,
+        max_context_chars=6_000,
+        reranker_failure_policy="fail_closed",
+    ),
+}
+
+RETRIEVAL_PROFILE: str = _env_choice(
+    "RETRIEVAL_PROFILE",
+    "keyword_safe",
+    frozenset(_RETRIEVAL_PROFILES),
+)
+ACTIVE_RETRIEVAL_PROFILE = _RETRIEVAL_PROFILES[RETRIEVAL_PROFILE]
+
+
 # LLM
 MODEL_NAME: str = os.getenv("MODEL_NAME", "gpt-5-mini")
 TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0"))
@@ -54,8 +125,10 @@ TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0"))
 # KB_PATH may also point at a directory of .txt files (ingested in
 # sorted-filename order) when a corpus is split across domains.
 KB_PATH: str = os.getenv("KB_PATH", "knowledge_base.txt")
-TOP_K: int = int(os.getenv("TOP_K", "6"))
-CANDIDATE_K: int = int(os.getenv("CANDIDATE_K", "12"))
+TOP_K: int = int(os.getenv("TOP_K", str(ACTIVE_RETRIEVAL_PROFILE.top_k)))
+CANDIDATE_K: int = int(
+    os.getenv("CANDIDATE_K", str(ACTIVE_RETRIEVAL_PROFILE.candidate_k))
+)
 # BM25 is only the ranking layer. A minimum matched-term gate in the retriever
 # rejects documents that score from one incidental word in a longer query.
 MIN_SCORE: float = float(os.getenv("MIN_SCORE", "2.0"))
@@ -65,7 +138,11 @@ TITLE_BOOST: float = float(os.getenv("TITLE_BOOST", "1.5"))
 THAI_TOKENIZER_ENABLED: bool = _env_bool("THAI_TOKENIZER_ENABLED", True)
 
 # Retrieval mode: "keyword" (BM25), "semantic" (embeddings), or "hybrid" (both)
-SEARCH_MODE: str = os.getenv("SEARCH_MODE", "keyword")
+SEARCH_MODE: str = _env_choice(
+    "SEARCH_MODE",
+    ACTIVE_RETRIEVAL_PROFILE.search_mode,
+    frozenset({"keyword", "semantic", "hybrid"}),
+)
 
 # Agentic retry loop: total search attempts per query (first attempt included).
 # When an attempt yields zero snippets, the query rewriter proposes a new
@@ -87,7 +164,10 @@ MIN_COSINE: float = float(os.getenv("MIN_COSINE", "0.38"))
 # multilingual optimum can therefore be more permissive than semantic-only
 # mode without weakening the latter's deterministic dense-side safety gate.
 HYBRID_MIN_COSINE: float = float(
-    os.getenv("HYBRID_MIN_COSINE", "0.20")
+    os.getenv(
+        "HYBRID_MIN_COSINE",
+        str(ACTIVE_RETRIEVAL_PROFILE.hybrid_min_cosine),
+    )
 )
 EMBEDDING_CACHE_DIR: str = os.getenv("EMBEDDING_CACHE_DIR", ".cache")
 
@@ -103,7 +183,7 @@ RERANKER_ENABLED: bool = _env_bool("RERANKER_ENABLED", True)
 RERANKER_MODEL: str = os.getenv(
     "RERANKER_MODEL", "BAAI/bge-reranker-v2-m3"
 )
-RERANKER_MODEL_REVISION: str = os.getenv(
+RERANKER_MODEL_REVISION: str = _env_revision(
     "RERANKER_MODEL_REVISION",
     "b4019bcd5cae485c342f61fe5889c2c800c5abec",
 )
@@ -111,9 +191,17 @@ RERANKER_CACHE_DIR: str = os.getenv(
     "RERANKER_CACHE_DIR", ".cache/reranker"
 )
 RERANKER_DEVICE: str = os.getenv("RERANKER_DEVICE", "")
-RERANKER_BATCH_SIZE: int = int(os.getenv("RERANKER_BATCH_SIZE", "4"))
+RERANKER_BATCH_SIZE: int = int(
+    os.getenv(
+        "RERANKER_BATCH_SIZE",
+        str(ACTIVE_RETRIEVAL_PROFILE.reranker_batch_size),
+    )
+)
 RERANKER_TIMEOUT_SECONDS: float = float(
-    os.getenv("RERANKER_TIMEOUT_SECONDS", "10")
+    os.getenv(
+        "RERANKER_TIMEOUT_SECONDS",
+        str(ACTIVE_RETRIEVAL_PROFILE.reranker_timeout_seconds),
+    )
 )
 RERANKER_MAX_CANDIDATES: int = int(
     os.getenv("RERANKER_MAX_CANDIDATES", "30")
@@ -121,14 +209,50 @@ RERANKER_MAX_CANDIDATES: int = int(
 RERANKER_MAX_LENGTH: int = int(os.getenv("RERANKER_MAX_LENGTH", "512"))
 RERANKER_MIN_SCORE: float | None = _env_optional_float(
     "RERANKER_MIN_SCORE",
-    0.01,
+    ACTIVE_RETRIEVAL_PROFILE.reranker_min_score,
 )
 RERANKER_LOCAL_FILES_ONLY: bool = _env_bool(
     "RERANKER_LOCAL_FILES_ONLY", False
 )
+RERANKER_FAILURE_POLICY: str = _env_choice(
+    "RERANKER_FAILURE_POLICY",
+    ACTIVE_RETRIEVAL_PROFILE.reranker_failure_policy,
+    frozenset({"fail_closed", "conservative", "fusion_order"}),
+)
+
+# Smaller secondary reranker. The immutable revision is the reviewed
+# Hugging Face snapshot, not a moving branch. It is loaded lazily and never
+# enables remote model code.
+RERANKER_FALLBACK_ENABLED: bool = _env_bool(
+    "RERANKER_FALLBACK_ENABLED", True
+)
+RERANKER_FALLBACK_MODEL: str = os.getenv(
+    "RERANKER_FALLBACK_MODEL", "BAAI/bge-reranker-base"
+)
+RERANKER_FALLBACK_MODEL_REVISION: str = _env_revision(
+    "RERANKER_FALLBACK_MODEL_REVISION",
+    "2cfc18c9415c912f9d8155881c133215df768a70",
+)
+RERANKER_FALLBACK_CACHE_DIR: str = os.getenv(
+    "RERANKER_FALLBACK_CACHE_DIR", ".cache/reranker-fallback"
+)
+RERANKER_FALLBACK_MAX_LENGTH: int = int(
+    os.getenv("RERANKER_FALLBACK_MAX_LENGTH", "512")
+)
+# Score scales are model-specific and unbounded, so the secondary threshold
+# is deliberately independent from the primary model's tuned gate.
+RERANKER_FALLBACK_MIN_SCORE: float | None = _env_optional_float(
+    "RERANKER_FALLBACK_MIN_SCORE",
+    0.01,
+)
 
 # Grounding context
-MAX_CONTEXT_CHARS: int = int(os.getenv("MAX_CONTEXT_CHARS", "6000"))
+MAX_CONTEXT_CHARS: int = int(
+    os.getenv(
+        "MAX_CONTEXT_CHARS",
+        str(ACTIVE_RETRIEVAL_PROFILE.max_context_chars),
+    )
+)
 CONTEXT_DUPLICATE_THRESHOLD: float = float(
     os.getenv("CONTEXT_DUPLICATE_THRESHOLD", "0.90")
 )

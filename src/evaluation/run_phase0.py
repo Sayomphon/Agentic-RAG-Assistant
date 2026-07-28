@@ -208,6 +208,27 @@ def _runtime_health(retriever: Retriever) -> dict[str, object]:
         "reranker_fallback_count": int(
             getattr(retriever, "reranker_fallback_count", 0)
         ),
+        "primary_reranker_failure_count": int(
+            getattr(retriever, "primary_reranker_failure_count", 0)
+        ),
+        "secondary_reranker_usage_count": int(
+            getattr(retriever, "secondary_reranker_usage_count", 0)
+        ),
+        "secondary_reranker_failure_count": int(
+            getattr(retriever, "secondary_reranker_failure_count", 0)
+        ),
+        "fail_closed_count": int(
+            getattr(retriever, "fail_closed_count", 0)
+        ),
+        "fusion_fallback_count": int(
+            getattr(retriever, "fusion_fallback_count", 0)
+        ),
+        "active_reranker_model": str(
+            getattr(retriever, "active_reranker_model", "")
+        ),
+        "last_fallback_reason_code": str(
+            getattr(retriever, "last_fallback_reason_code", "")
+        ),
         "answerability_rejection_count": int(
             getattr(retriever, "answerability_rejection_count", 0)
         ),
@@ -219,12 +240,27 @@ def _assert_healthy_runtime(
     health: Mapping[str, object],
 ) -> None:
     query_failures = int(health["query_failure_count"])
-    reranker_fallbacks = int(health["reranker_fallback_count"])
-    if query_failures or reranker_fallbacks:
+    primary_failures = int(health["primary_reranker_failure_count"])
+    secondary_usage = int(health["secondary_reranker_usage_count"])
+    secondary_failures = int(health["secondary_reranker_failure_count"])
+    fail_closed = int(health["fail_closed_count"])
+    fusion_fallbacks = int(health["fusion_fallback_count"])
+    if (
+        query_failures
+        or primary_failures
+        or secondary_usage
+        or secondary_failures
+        or fail_closed
+        or fusion_fallbacks
+    ):
         raise RuntimeError(
             f"{mode} evaluation degraded: query_failures={query_failures}, "
-            f"reranker_fallbacks={reranker_fallbacks}. Refusing to freeze "
-            "fallback output as a healthy Phase 0 baseline."
+            f"primary_reranker_failures={primary_failures}, "
+            f"secondary_usage={secondary_usage}, "
+            f"secondary_failures={secondary_failures}, "
+            f"fail_closed={fail_closed}, "
+            f"fusion_fallbacks={fusion_fallbacks}. Refusing to freeze "
+            "degraded output as a healthy Phase 0 baseline."
         )
 
 
@@ -280,14 +316,21 @@ def _build_report(
 
     health_lines = [
         "| mode | implementation | source | query failures "
-        "| reranker fallbacks | answerability rejections |",
-        "|---|---|---|---:|---:|---:|",
+        "| primary failures | secondary uses | secondary failures "
+        "| fail closed | fusion fallback | active model "
+        "| answerability rejections |",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|---|---:|",
     ]
     for mode, health in health_by_mode.items():
         health_lines.append(
             f"| {mode} | {health['implementation']} | {health['source']} | "
             f"{health['query_failure_count']} | "
-            f"{health['reranker_fallback_count']} | "
+            f"{health['primary_reranker_failure_count']} | "
+            f"{health['secondary_reranker_usage_count']} | "
+            f"{health['secondary_reranker_failure_count']} | "
+            f"{health['fail_closed_count']} | "
+            f"{health['fusion_fallback_count']} | "
+            f"{health['active_reranker_model'] or '—'} | "
             f"{health['answerability_rejection_count']} |"
         )
 

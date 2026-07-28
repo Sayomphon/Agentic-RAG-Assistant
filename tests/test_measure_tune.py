@@ -9,11 +9,14 @@ from pathlib import Path
 from src.evaluation.run_measure_tune import (
     PreparedCase,
     ProfileEvaluation,
+    RESULTS_JSON_PATH,
+    RESULTS_MARKDOWN_PATH,
     TuneProfile,
     _fuse_candidates,
     _load_prepared_cache,
     _profile_payload,
     _rerank_from_scores,
+    _validate_output_paths,
     _write_prepared_cache,
     evaluate_profile,
     select_balanced_profile,
@@ -127,6 +130,28 @@ class ReplayPipelineTests(unittest.TestCase):
             self.assertEqual(path.stat().st_mode & 0o777, 0o600)
             self.assertIsNotNone(restored)
 
+    def test_v2_outputs_cannot_overwrite_historical_or_existing_evidence(
+        self,
+    ) -> None:
+        self.assertEqual(RESULTS_JSON_PATH.name, "track_a_ablation_results_v2.json")
+        self.assertEqual(
+            RESULTS_MARKDOWN_PATH.name,
+            "track_a_ablation_results_v2.md",
+        )
+        with self.assertRaisesRegex(ValueError, "historical"):
+            _validate_output_paths(
+                RESULTS_JSON_PATH.parent / "track_a_step3_results.json",
+                Path("new-report.md"),
+            )
+        with tempfile.TemporaryDirectory() as directory:
+            existing = Path(directory) / "existing.json"
+            existing.touch()
+            with self.assertRaisesRegex(FileExistsError, "versioned"):
+                _validate_output_paths(
+                    existing,
+                    Path(directory) / "new-report.md",
+                )
+
 
 class SelectionTests(unittest.TestCase):
     def _evaluation(
@@ -158,7 +183,8 @@ class SelectionTests(unittest.TestCase):
             context_avg_chars=100.0,
             context_p95_chars=100.0,
             context_truncation_rate=0.0,
-            citation_validity=1.0,
+            context_header_validity=1.0,
+            context_budget_validity=1.0,
             average_final_hits=1.0,
             cases=(),
         )
@@ -223,6 +249,11 @@ class SelectionTests(unittest.TestCase):
         self.assertNotIn("query", serialized)
         self.assertNotIn("snippet", serialized)
         self.assertNotIn("document_body", serialized)
+        self.assertNotIn("citation_validity", payload)
+        self.assertEqual(payload["context_header_validity"], 1.0)
+        self.assertEqual(payload["context_budget_validity"], 1.0)
+        self.assertIsNone(payload["answer_citation_validity"])
+        self.assertIsNone(payload["answer_citation_coverage"])
 
 
 class ProfileEvaluationTests(unittest.TestCase):
@@ -290,7 +321,8 @@ class ProfileEvaluationTests(unittest.TestCase):
 
         self.assertTrue(result.passed_hard_gates)
         self.assertEqual(result.category_metrics["thai_answerable"]["recall"], 1.0)
-        self.assertEqual(result.citation_validity, 1.0)
+        self.assertEqual(result.context_header_validity, 1.0)
+        self.assertEqual(result.context_budget_validity, 1.0)
         self.assertLessEqual(result.context_p95_chars, 500)
 
 

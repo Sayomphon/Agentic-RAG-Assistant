@@ -104,8 +104,18 @@ pip install -r requirements.txt
 cp .env.example .env                                  # then put your OPENAI_API_KEY in .env
 ```
 
-The retrieval mode is `SEARCH_MODE` in `.env` (default `keyword`); set it to
-`semantic` or `hybrid` to use embeddings. **CLI** — single query or interactive:
+Runtime code defaults to the offline-safe `keyword_safe` retrieval profile.
+Copying `.env.example` explicitly activates
+`RETRIEVAL_PROFILE=track_a_balanced_v1`, whose mode is `hybrid`. Individual
+environment variables override the named profile; a trusted per-request UI
+`search_mode`/`top_k` override has highest priority:
+
+```text
+trusted request override > explicit env var > named profile > code fallback
+```
+
+Set `SEARCH_MODE=keyword|semantic|hybrid` only when an individual override is
+required. **CLI** — single query or interactive:
 
 ```bash
 python main.py "What is the policy on international travel?"
@@ -146,24 +156,37 @@ the other measures which direction is forward.
 
 ### Track A — Step 2 quality path
 
-Hybrid mode now retrieves `CANDIDATE_K` candidates from each retrieval side,
-fuses them, reranks the combined pool locally with the pinned multilingual
-`BAAI/bge-reranker-v2-m3` revision, and hands only `TOP_K` diverse,
-budget-bounded snippets to the generator. The model loads on the first hybrid
-query; remote model code is disabled, inference is serialized to bound RAM,
-weights are cached under `.cache/reranker`, and timeout/load/inference
-failures preserve the original fusion order.
+Hybrid mode retrieves `CANDIDATE_K` candidates from each retrieval side,
+fuses them, and reranks the combined pool locally with the pinned multilingual
+`BAAI/bge-reranker-v2-m3` revision. If the primary model cannot load, times
+out, is busy, exhausts memory, or returns invalid scores, the runtime tries the
+independently pinned `BAAI/bge-reranker-base` secondary model. If both models
+fail, the production-default `RERANKER_FAILURE_POLICY=fail_closed` returns no
+evidence, so the generator produces its deterministic not-found response.
+`fusion_order` is an explicit lab/debug policy only; `conservative` also
+fails closed unless a reviewed deterministic gate is installed.
+
+Both models load lazily, remote model code is disabled
+(`trust_remote_code=False`), inference is serialized to bound RAM, and weights
+are stored in separate `.cache/reranker` and `.cache/reranker-fallback`
+directories. Telemetry records only stable reason codes and model identifiers;
+raw queries, candidate bodies, and raw exception details are never logged.
+The smaller secondary model is MIT-licensed, uses unbounded relevance logits,
+and therefore has its own `RERANKER_FALLBACK_MIN_SCORE` rather than silently
+reusing the primary threshold.
 
 Before serving hybrid traffic in a fresh environment, prefetch and validate
-the pinned local snapshot without sending any knowledge-base content:
+both pinned snapshots without sending any knowledge-base content:
 
 ```bash
 python -m src.retrievers.reranker
 ```
 
 The Step 3 measurement below set `RERANKER_MIN_SCORE=0.01`; candidates below
-the threshold are rejected before generation. Set it to `off` only for an
-explicit fallback experiment. Semantic-only mode keeps the conservative
+the threshold are rejected before generation. The secondary threshold is
+configured separately because model score scales are not interchangeable.
+Set either threshold to `off` only for an explicit lab experiment.
+Semantic-only mode keeps the conservative
 `MIN_COSINE=0.38`, while hybrid mode uses the separately measured
 `HYBRID_MIN_COSINE=0.20` behind the reranker gate. This separation prevents a
 Thai-recall improvement in hybrid mode from silently weakening semantic-only
@@ -185,7 +208,8 @@ python -m src.evaluation.run_measure_tune --allow-query-embeddings
 Only evaluation query strings go to the Embeddings endpoint. Knowledge-base
 bodies, snippets, prompts, API keys, and raw environment values are excluded.
 Sanitized scores are cached locally so a report or decision-gate retry makes
-zero additional API requests. The selected configuration is:
+zero additional API requests. The selected configuration is the authoritative
+`track_a_balanced_v1` profile:
 
 ```text
 CANDIDATE_K=12
@@ -195,13 +219,20 @@ RERANKER_MIN_SCORE=0.01
 RERANKER_BATCH_SIZE=4
 RERANKER_TIMEOUT_SECONDS=10
 MAX_CONTEXT_CHARS=6000
+RERANKER_FAILURE_POLICY=fail_closed
 ```
+
+The historical Step 3 v1 report called its context-header check
+`citation_validity`. New evaluation output uses schema v2 and separates
+`context_header_validity`, `context_budget_validity`,
+`answer_citation_validity`, and `answer_citation_coverage`; the answer fields
+remain null in retrieval-only runs.
 
 Against the same 40 cases, the balanced runtime profile improved recall from
 63.9% to 88.9%, MRR from 0.650 to 0.900, Thai recall from 0% to 70%, and
-not-found discipline from 30% to 80%; citation validity remained 100% and the
-selected context budget caused no truncation. It retains about 92.6% of the
-quality-max composite score while cutting the reranker pool from 30 to 12;
+not-found discipline from 30% to 80%; context-header validity remained 100%
+and the selected context budget caused no truncation. It retains about 92.6%
+of the quality-max composite score while cutting the reranker pool from 30 to 12;
 measured retrieval p95 was about 2.4 seconds on the Apple M4/16 GB environment.
 The optional quality-max profile (`CANDIDATE_K=30`) reached 95.6% recall and
 90% Thai recall but showed unacceptable tail latency (up to roughly 18.5

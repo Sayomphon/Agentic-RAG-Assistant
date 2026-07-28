@@ -7,9 +7,10 @@ Complements the retrieval-layer suites by scoring the *generated answer*
 on four axes — two deterministic (no LLM, immune to judge bias) and two
 LLM-as-judge:
 
-    citation validity    deterministic  every [Title] cited in the answer
-                                        must name a section actually handed
-                                        to the generator
+    answer citation
+    validity             deterministic  every [Title] cited in the final
+                                        answer must name a section actually
+                                        handed to the generator
     negative discipline  deterministic  negative queries must return the
                                         not-found sentence byte-exactly
     faithfulness         LLM judge      answer decomposed into atomic
@@ -175,7 +176,7 @@ def main() -> int:
     negatives = [r for r in rows if r["category"] == "negative"]
     degraded = [r for r in rows if r.get("degraded_to_not_found")]
 
-    citation_validity = (
+    answer_citation_validity = (
         sum(r["citations_ok"] for r in judged) / len(judged) if judged else 1.0
     )
     negative_exact = (
@@ -191,7 +192,7 @@ def main() -> int:
     )
 
     passed = (
-        citation_validity == 1.0
+        answer_citation_validity == 1.0
         and negative_exact == 1.0
         and avg_faithfulness >= FAITHFULNESS_THRESHOLD
         and avg_relevance >= RELEVANCE_THRESHOLD
@@ -200,9 +201,10 @@ def main() -> int:
     summary = [
         "| axis | method | result | threshold | pass |",
         "|---|---|---|---|---|",
-        f"| citation validity | deterministic | {citation_validity:.0%} of answers "
+        f"| answer citation validity | deterministic | "
+        f"{answer_citation_validity:.0%} of answers "
         f"cite only handed-off sections | 100% | "
-        f"{'✅' if citation_validity == 1.0 else '❌'} |",
+        f"{'✅' if answer_citation_validity == 1.0 else '❌'} |",
         f"| negative discipline | deterministic | {negative_exact:.0%} byte-exact "
         f"not-found ({len(negatives)} queries) | 100% | "
         f"{'✅' if negative_exact == 1.0 else '❌'} |",
