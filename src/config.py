@@ -28,10 +28,16 @@ def _env_bool(name: str, default: bool) -> bool:
     )
 
 
-def _env_optional_float(name: str) -> float | None:
-    """Read an optional numeric gate; an empty value leaves it disabled."""
-    raw = os.getenv(name, "").strip()
-    if not raw:
+def _env_optional_float(
+    name: str,
+    default: float | None = None,
+) -> float | None:
+    """Read an optional numeric gate with an explicit disable sentinel."""
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    raw = raw.strip()
+    if raw.lower() in {"none", "off", "disabled"}:
         return None
     value = float(raw)
     if not math.isfinite(value):
@@ -48,8 +54,8 @@ TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0"))
 # KB_PATH may also point at a directory of .txt files (ingested in
 # sorted-filename order) when a corpus is split across domains.
 KB_PATH: str = os.getenv("KB_PATH", "knowledge_base.txt")
-TOP_K: int = int(os.getenv("TOP_K", "4"))
-CANDIDATE_K: int = int(os.getenv("CANDIDATE_K", "24"))
+TOP_K: int = int(os.getenv("TOP_K", "6"))
+CANDIDATE_K: int = int(os.getenv("CANDIDATE_K", "12"))
 # BM25 is only the ranking layer. A minimum matched-term gate in the retriever
 # rejects documents that score from one incidental word in a longer query.
 MIN_SCORE: float = float(os.getenv("MIN_SCORE", "2.0"))
@@ -77,6 +83,12 @@ EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 # ("quit my job" = 0.345) fall below the gate and degrade to "not found" —
 # a deliberate trade: a missed answer is recoverable, a fabricated one is not.
 MIN_COSINE: float = float(os.getenv("MIN_COSINE", "0.38"))
+# Hybrid retrieval has a local answerability gate after fusion. Its measured
+# multilingual optimum can therefore be more permissive than semantic-only
+# mode without weakening the latter's deterministic dense-side safety gate.
+HYBRID_MIN_COSINE: float = float(
+    os.getenv("HYBRID_MIN_COSINE", "0.20")
+)
 EMBEDDING_CACHE_DIR: str = os.getenv("EMBEDDING_CACHE_DIR", ".cache")
 
 # Hybrid fusion ("rrf" is rank-based and scale-free; "weighted" kept for
@@ -99,23 +111,24 @@ RERANKER_CACHE_DIR: str = os.getenv(
     "RERANKER_CACHE_DIR", ".cache/reranker"
 )
 RERANKER_DEVICE: str = os.getenv("RERANKER_DEVICE", "")
-RERANKER_BATCH_SIZE: int = int(os.getenv("RERANKER_BATCH_SIZE", "8"))
+RERANKER_BATCH_SIZE: int = int(os.getenv("RERANKER_BATCH_SIZE", "4"))
 RERANKER_TIMEOUT_SECONDS: float = float(
-    os.getenv("RERANKER_TIMEOUT_SECONDS", "5")
+    os.getenv("RERANKER_TIMEOUT_SECONDS", "10")
 )
 RERANKER_MAX_CANDIDATES: int = int(
     os.getenv("RERANKER_MAX_CANDIDATES", "30")
 )
 RERANKER_MAX_LENGTH: int = int(os.getenv("RERANKER_MAX_LENGTH", "512"))
 RERANKER_MIN_SCORE: float | None = _env_optional_float(
-    "RERANKER_MIN_SCORE"
+    "RERANKER_MIN_SCORE",
+    0.01,
 )
 RERANKER_LOCAL_FILES_ONLY: bool = _env_bool(
     "RERANKER_LOCAL_FILES_ONLY", False
 )
 
 # Grounding context
-MAX_CONTEXT_CHARS: int = int(os.getenv("MAX_CONTEXT_CHARS", "12000"))
+MAX_CONTEXT_CHARS: int = int(os.getenv("MAX_CONTEXT_CHARS", "6000"))
 CONTEXT_DUPLICATE_THRESHOLD: float = float(
     os.getenv("CONTEXT_DUPLICATE_THRESHOLD", "0.90")
 )

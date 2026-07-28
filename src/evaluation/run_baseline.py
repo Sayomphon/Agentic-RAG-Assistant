@@ -224,12 +224,24 @@ def expected_manifest(cases: Sequence[BaselineCase]) -> dict[str, object]:
     }
 
 
-def verify_manifest(cases: Sequence[BaselineCase]) -> dict[str, object]:
-    """Fail if the versioned manifest no longer matches data, corpus, or config."""
+def verify_manifest(
+    cases: Sequence[BaselineCase],
+    *,
+    require_current_config: bool = True,
+) -> dict[str, object]:
+    """Verify frozen evidence, optionally requiring the old runtime config.
+
+    Step 1 creation remains strict: its runner refuses to overwrite a baseline
+    after retrieval settings change. Later steps can still verify the immutable
+    dataset/corpus identity without pretending the current tuned config is the
+    original baseline config.
+    """
     if not MANIFEST_PATH.is_file():
         raise FileNotFoundError(f"Baseline manifest not found: {MANIFEST_PATH}")
     recorded = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     current = expected_manifest(cases)
+    if not require_current_config and isinstance(recorded, dict):
+        current["retrieval_config"] = recorded.get("retrieval_config")
     if recorded != current:
         raise ValueError(
             "Baseline manifest does not match the current dataset, corpus, or "

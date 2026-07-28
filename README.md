@@ -161,12 +161,63 @@ the pinned local snapshot without sending any knowledge-base content:
 python -m src.retrievers.reranker
 ```
 
-`RERANKER_MIN_SCORE` is intentionally blank by default. Set it only after
-measuring the pinned model and dataset; when configured, candidates below the
-threshold are rejected before generation. `MIN_COSINE` remains the dense-side
-gate. Thai-only queries still use the Retriever Agent's English translation
-for the current English-only handbook, while BM25 itself now safely tokenizes
-Thai and mixed-script corpora with PyThaiNLP.
+The Step 3 measurement below set `RERANKER_MIN_SCORE=0.01`; candidates below
+the threshold are rejected before generation. Set it to `off` only for an
+explicit fallback experiment. Semantic-only mode keeps the conservative
+`MIN_COSINE=0.38`, while hybrid mode uses the separately measured
+`HYBRID_MIN_COSINE=0.20` behind the reranker gate. This separation prevents a
+Thai-recall improvement in hybrid mode from silently weakening semantic-only
+not-found behaviour. Thai-only queries still use the Retriever Agent's English
+translation for the current English-only handbook, while BM25 itself safely
+tokenizes Thai and mixed-script corpora with PyThaiNLP.
+
+### Track A — Step 3 measure and tune
+
+Step 3 reads the frozen Step 1 artifact rather than overwriting it, embeds the
+40 versioned evaluation queries once, scores candidate evidence with the pinned
+local reranker, and replays a 540-profile tuning grid in memory. The runner
+requires an explicit data-boundary flag:
+
+```bash
+python -m src.evaluation.run_measure_tune --allow-query-embeddings
+```
+
+Only evaluation query strings go to the Embeddings endpoint. Knowledge-base
+bodies, snippets, prompts, API keys, and raw environment values are excluded.
+Sanitized scores are cached locally so a report or decision-gate retry makes
+zero additional API requests. The selected configuration is:
+
+```text
+CANDIDATE_K=12
+TOP_K=6
+HYBRID_MIN_COSINE=0.20
+RERANKER_MIN_SCORE=0.01
+RERANKER_BATCH_SIZE=4
+RERANKER_TIMEOUT_SECONDS=10
+MAX_CONTEXT_CHARS=6000
+```
+
+Against the same 40 cases, the balanced runtime profile improved recall from
+63.9% to 88.9%, MRR from 0.650 to 0.900, Thai recall from 0% to 70%, and
+not-found discipline from 30% to 80%; citation validity remained 100% and the
+selected context budget caused no truncation. It retains about 92.6% of the
+quality-max composite score while cutting the reranker pool from 30 to 12;
+measured retrieval p95 was about 2.4 seconds on the Apple M4/16 GB environment.
+The optional quality-max profile (`CANDIDATE_K=30`) reached 95.6% recall and
+90% Thai recall but showed unacceptable tail latency (up to roughly 18.5
+seconds in the final decision run), so it is not the default.
+
+The reranker still adds material quality. The remaining negative errors are
+semantically plausible but absent facts, so a single score threshold cannot
+safely reach 90% not-found discipline without losing labelled answers. Treat
+that as the next answerability-classification improvement, not as a reason to
+hide the measured trade-off. The 10-second reranker timeout remains above the
+balanced profile's measured local p95 so normal CPU/MPS variance does not
+silently degrade it to fusion order.
+
+The complete evidence, selected profile, category breakdown, latency, and
+security boundary are in
+[`track_a_step3_results.md`](track_a_step3_results.md).
 
 ### Track A — Step 1 mini baseline
 

@@ -1,0 +1,4415 @@
+{
+  "schema_version": "track-a-step3-measure-tune-v1",
+  "generated_at": "2026-07-28T12:35:26+07:00",
+  "baseline": {
+    "file": "baseline_results.json",
+    "sha256": "8fbbc0d33ac9ab8a678c5cd3154eb397a436a99948360f1a9928dbea9618b3c7",
+    "schema_version": "track-a-step1-baseline-v1",
+    "metrics": {
+      "hit_rate_at_k": 0.6666666666666666,
+      "recall_at_k": 0.638888888888889,
+      "mrr": 0.65,
+      "false_positive_rate": 0.7,
+      "not_found_discipline": 0.30000000000000004,
+      "latency_avg_ms": 0.06082812506065238,
+      "latency_p50_ms": 0.06691650014545303,
+      "latency_p95_ms": 0.12246700007381149
+    },
+    "category_metrics": {
+      "english_answerable": {
+        "hit_rate": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      },
+      "thai_answerable": {
+        "hit_rate": 0.0,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "not_found_discipline": 1.0
+      },
+      "mixed_answerable": {
+        "hit_rate": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      },
+      "negative": {
+        "hit_rate": 0.0,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "not_found_discipline": 0.30000000000000004
+      },
+      "multi_section": {
+        "hit_rate": 1.0,
+        "recall": 0.8333333333333334,
+        "mrr": 0.9,
+        "not_found_discipline": 1.0
+      }
+    }
+  },
+  "dataset": {
+    "file": "src/evaluation/datasets/lean_quality_v1.json",
+    "sha256": "3f80666e6dfd77b7a668eb82c3a5dc6f79a8eed12a97988fc499bdccaf55ff3f",
+    "case_count": 40
+  },
+  "corpus": {
+    "algorithm": "sha256(length-prefixed-relative-path-and-bytes-v1)",
+    "sha256": "e09382f19b18ef2a52e1e93826e81852ee649d4bb5ddccb74a1865b8b60fe5c4",
+    "source_files": [
+      "knowledge_base.txt"
+    ],
+    "source_file_count": 1,
+    "section_count": 54,
+    "total_bytes": 41501
+  },
+  "environment": {
+    "python_version": "3.11.15",
+    "python_implementation": "CPython",
+    "python_executable": "venv/bin/python",
+    "operating_system": "Darwin",
+    "operating_system_release": "25.3.0",
+    "machine": "arm64",
+    "dependencies": [
+      {
+        "package": "langgraph",
+        "declared": "1.2.9",
+        "installed": "1.2.9"
+      },
+      {
+        "package": "langchain-openai",
+        "declared": "1.4.1",
+        "installed": "1.4.1"
+      },
+      {
+        "package": "langchain-core",
+        "declared": "1.5.1",
+        "installed": "1.5.1"
+      },
+      {
+        "package": "openai",
+        "declared": "2.48.0",
+        "installed": "2.48.0"
+      },
+      {
+        "package": "rank-bm25",
+        "declared": "0.2.2",
+        "installed": "0.2.2"
+      },
+      {
+        "package": "pythainlp",
+        "declared": "5.3.4",
+        "installed": "5.3.4"
+      },
+      {
+        "package": "sentence-transformers",
+        "declared": "5.6.0",
+        "installed": "5.6.0"
+      },
+      {
+        "package": "huggingface-hub",
+        "declared": "1.24.0",
+        "installed": "1.24.0"
+      },
+      {
+        "package": "numpy",
+        "declared": "2.4.6",
+        "installed": "2.4.6"
+      },
+      {
+        "package": "python-dotenv",
+        "declared": "1.2.2",
+        "installed": "1.2.2"
+      },
+      {
+        "package": "typing_extensions",
+        "declared": "4.16.0",
+        "installed": "4.16.0"
+      },
+      {
+        "package": "streamlit",
+        "declared": "1.60.0",
+        "installed": "1.60.0"
+      }
+    ]
+  },
+  "models": {
+    "embedding_model": "text-embedding-3-small",
+    "reranker_model": "BAAI/bge-reranker-v2-m3",
+    "reranker_revision": "b4019bcd5cae485c342f61fe5889c2c800c5abec",
+    "reranker_batch_size": 4,
+    "reranker_timeout_seconds": 10.0
+  },
+  "external_data_boundary": {
+    "query_strings_sent_to_embedding_provider": 0,
+    "query_strings_used_to_create_prepared_cache": 40,
+    "knowledge_base_bodies_sent": 0,
+    "answer_evaluation_run": false,
+    "prepared_cache_hit": true
+  },
+  "grid": {
+    "candidate_k": [
+      12,
+      24,
+      30
+    ],
+    "top_k": [
+      4,
+      6
+    ],
+    "min_cosine": [
+      0.0,
+      0.1,
+      0.2,
+      0.3,
+      0.38
+    ],
+    "reranker_min_score": [
+      null,
+      0.01,
+      0.05,
+      0.1,
+      0.2,
+      0.5
+    ],
+    "max_context_chars": [
+      4000,
+      6000,
+      12000
+    ],
+    "profile_count": 540
+  },
+  "checks": [
+    {
+      "name": "unit_tests",
+      "command": "python -m unittest discover -s tests -v",
+      "exit_code": 0,
+      "duration_ms": 3221.328583000286,
+      "case_count": 82,
+      "passed": true
+    },
+    {
+      "name": "keyword_regression",
+      "command": "python -m src.evaluation.regression",
+      "exit_code": 0,
+      "duration_ms": 103.76749999977619,
+      "case_count": 15,
+      "passed": true
+    }
+  ],
+  "reranker_score_distribution": {
+    "min": 1.602302654646337e-05,
+    "max": 0.9982314705848694,
+    "p50": 0.00012708963913610205,
+    "p95": 0.10355607047677026
+  },
+  "step2_defaults": {
+    "profile_id": "c24-k4-cos0.38-rron-none-ctx12000",
+    "config": {
+      "candidate_k": 24,
+      "top_k": 4,
+      "min_cosine": 0.38,
+      "reranker_min_score": null,
+      "max_context_chars": 12000,
+      "reranker_enabled": true
+    },
+    "metrics": {
+      "hit_rate_at_k": 0.7,
+      "recall_at_k": 0.6916666666666667,
+      "mrr": 0.7,
+      "false_positive_rate": 0.9,
+      "not_found_discipline": 0.09999999999999998,
+      "latency_avg_ms": 0.0,
+      "latency_p50_ms": 0.0,
+      "latency_p95_ms": 0.0
+    },
+    "category_metrics": {
+      "english_answerable": {
+        "hit_rate": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      },
+      "thai_answerable": {
+        "hit_rate": 0.1,
+        "recall": 0.1,
+        "mrr": 0.1,
+        "not_found_discipline": 1.0
+      },
+      "mixed_answerable": {
+        "hit_rate": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      },
+      "negative": {
+        "hit_rate": 0.0,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "not_found_discipline": 0.09999999999999998
+      },
+      "multi_section": {
+        "hit_rate": 1.0,
+        "recall": 0.95,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      }
+    },
+    "quality_score": 0.42749999999999994,
+    "passed_hard_gates": false,
+    "passed_safety_target": false,
+    "gate_failures": [
+      "not_found_discipline_below_baseline"
+    ],
+    "context_avg_chars": 1541.1,
+    "context_p95_chars": 3166.5999999999995,
+    "context_truncation_rate": 0.0,
+    "citation_validity": 1.0,
+    "average_final_hits": 2.05,
+    "cases": [
+      {
+        "case_id": "en_remote_work_days",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "Hybrid Work Guidelines",
+          "Overtime Policy",
+          "Annual Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_annual_leave_carryover",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Annual Leave"
+        ],
+        "retrieved_titles": [
+          "Annual Leave",
+          "Sick Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_sick_leave_certificate",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Sick Leave"
+        ],
+        "retrieved_titles": [
+          "Sick Leave",
+          "Annual Leave",
+          "Bereavement and Compassionate Absence",
+          "Ordination Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_probation_duration",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Probation Period"
+        ],
+        "retrieved_titles": [
+          "Probation Period"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_training_budget",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Training Budget"
+        ],
+        "retrieved_titles": [
+          "Training Budget",
+          "Annual Leave",
+          "Equipment and Laptop Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_password_length",
+        "category": "english_answerable",
+        "expected_titles": [
+          "IT Security and Password Policy"
+        ],
+        "retrieved_titles": [
+          "IT Security and Password Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_vpn_client",
+        "category": "english_answerable",
+        "expected_titles": [
+          "VPN Usage"
+        ],
+        "retrieved_titles": [
+          "VPN Usage",
+          "Remote Work Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_expense_deadline",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Expense Reimbursement"
+        ],
+        "retrieved_titles": [
+          "Expense Reimbursement",
+          "Domestic Travel Policy",
+          "Annual Leave",
+          "International Travel Visa Support"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_travel_insurance",
+        "category": "english_answerable",
+        "expected_titles": [
+          "International Travel Insurance"
+        ],
+        "retrieved_titles": [
+          "International Travel Insurance",
+          "International Travel Daily Allowance",
+          "International Travel Approval Process",
+          "Health Benefits"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_standard_support_hours",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Customer Support Service Levels"
+        ],
+        "retrieved_titles": [
+          "Customer Support Service Levels",
+          "Service Credit Policy",
+          "Support Escalation Process"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_remote_work_days",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_annual_leave_carryover",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Annual Leave"
+        ],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_sick_leave_certificate",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Sick Leave"
+        ],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_ordination_leave",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Ordination Leave"
+        ],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_maternity_leave",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Parental Leave"
+        ],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_salary_payment_date",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Compensation Disbursement Schedule"
+        ],
+        "retrieved_titles": [
+          "Compensation Disbursement Schedule"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_probation_duration",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Probation Period"
+        ],
+        "retrieved_titles": [
+          "Hybrid Work Guidelines"
+        ],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_training_budget",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Training Budget"
+        ],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_resignation_notice",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Resignation Process"
+        ],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_security_incident",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Security Incident Response Process"
+        ],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_remote_portal",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "Hybrid Work Guidelines"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_hr204",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Employee Referral Program"
+        ],
+        "retrieved_titles": [
+          "Employee Referral Program",
+          "Resignation Process",
+          "Purchase Requisition and Purchase Orders",
+          "Expense Reimbursement"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_safejourney",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "International Travel Insurance"
+        ],
+        "retrieved_titles": [
+          "International Travel Insurance"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_platinum_p1",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Customer Support Service Levels"
+        ],
+        "retrieved_titles": [
+          "Customer Support Service Levels",
+          "Support Escalation Process",
+          "Service Credit Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_expense_approval",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Expense Reimbursement"
+        ],
+        "retrieved_titles": [
+          "Expense Reimbursement",
+          "Purchase Requisition and Purchase Orders",
+          "Domestic Travel Policy",
+          "Corporate Credit Card"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_ceo_salary",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_home_addresses",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "VPN Usage",
+          "Equipment and Laptop Policy",
+          "Resignation Process",
+          "Employee Referral Program"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_wifi_password",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "VPN Usage",
+          "IT Security and Password Policy"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_source_credentials",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "IT Security and Password Policy"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_performance_rating",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Performance Review Cycle",
+          "Employee Referral Program"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_customer_cards",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "PaySiam Gateway Product Overview",
+          "Corporate Credit Card",
+          "Service Credit Policy",
+          "Vendor Invoice and Payment Terms"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_board_minutes",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Meeting Room and Desk Booking"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_acquisition_plan",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Company Overview",
+          "Provident Fund",
+          "ChatServe Product Overview",
+          "Customer Support Service Levels"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_biometric_records",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Office Access and Visitor Policy"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_medical_diagnoses",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Employee Assistance Program"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_overseas_trip",
+        "category": "multi_section",
+        "expected_titles": [
+          "International Travel Approval Process",
+          "International Travel Daily Allowance",
+          "International Travel Insurance",
+          "International Travel Visa Support"
+        ],
+        "retrieved_titles": [
+          "International Travel Approval Process",
+          "International Travel Daily Allowance",
+          "International Travel Insurance",
+          "Domestic Travel Policy"
+        ],
+        "hit": true,
+        "recall": 0.75,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_new_vendor_purchase",
+        "category": "multi_section",
+        "expected_titles": [
+          "Purchase Requisition and Purchase Orders",
+          "Vendor Onboarding and Registration"
+        ],
+        "retrieved_titles": [
+          "Vendor Onboarding and Registration",
+          "Purchase Requisition and Purchase Orders",
+          "Vendor Invoice and Payment Terms"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_remote_security",
+        "category": "multi_section",
+        "expected_titles": [
+          "Remote Work Policy",
+          "VPN Usage"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "IT Security and Password Policy",
+          "VPN Usage",
+          "Hybrid Work Guidelines"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_p1_service_failure",
+        "category": "multi_section",
+        "expected_titles": [
+          "Customer Support Service Levels",
+          "Support Escalation Process",
+          "Service Credit Policy"
+        ],
+        "retrieved_titles": [
+          "Support Escalation Process",
+          "Customer Support Service Levels",
+          "Service Credit Policy",
+          "Security Incident Response Process"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_new_employee",
+        "category": "multi_section",
+        "expected_titles": [
+          "Onboarding Process",
+          "Probation Period",
+          "Health Benefits"
+        ],
+        "retrieved_titles": [
+          "Probation Period",
+          "Health Benefits",
+          "Onboarding Process"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      }
+    ]
+  },
+  "quality_winner": {
+    "profile_id": "c30-k6-cos0.10-rron-0.01-ctx6000",
+    "config": {
+      "candidate_k": 30,
+      "top_k": 6,
+      "min_cosine": 0.1,
+      "reranker_min_score": 0.01,
+      "max_context_chars": 6000,
+      "reranker_enabled": true
+    },
+    "metrics": {
+      "hit_rate_at_k": 0.9666666666666667,
+      "recall_at_k": 0.9555555555555556,
+      "mrr": 0.9666666666666667,
+      "false_positive_rate": 0.2,
+      "not_found_discipline": 0.8,
+      "latency_avg_ms": 0.0,
+      "latency_p50_ms": 0.0,
+      "latency_p95_ms": 0.0
+    },
+    "category_metrics": {
+      "english_answerable": {
+        "hit_rate": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      },
+      "thai_answerable": {
+        "hit_rate": 0.9,
+        "recall": 0.9,
+        "mrr": 0.9,
+        "not_found_discipline": 1.0
+      },
+      "mixed_answerable": {
+        "hit_rate": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      },
+      "negative": {
+        "hit_rate": 0.0,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "not_found_discipline": 0.8
+      },
+      "multi_section": {
+        "hit_rate": 1.0,
+        "recall": 0.9333333333333333,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      }
+    },
+    "quality_score": 0.9033333333333333,
+    "passed_hard_gates": true,
+    "passed_safety_target": false,
+    "gate_failures": [],
+    "context_avg_chars": 2100.65,
+    "context_p95_chars": 4484.15,
+    "context_truncation_rate": 0.0,
+    "citation_validity": 1.0,
+    "average_final_hits": 2.825,
+    "cases": [
+      {
+        "case_id": "en_remote_work_days",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "Hybrid Work Guidelines",
+          "Overtime Policy",
+          "Bereavement and Compassionate Absence",
+          "BYOD Program",
+          "Annual Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_annual_leave_carryover",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Annual Leave"
+        ],
+        "retrieved_titles": [
+          "Annual Leave",
+          "Sick Leave",
+          "Resignation Process",
+          "Bereavement and Compassionate Absence",
+          "Probation Period",
+          "Ordination Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_sick_leave_certificate",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Sick Leave"
+        ],
+        "retrieved_titles": [
+          "Sick Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_probation_duration",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Probation Period"
+        ],
+        "retrieved_titles": [
+          "Probation Period",
+          "Employee Referral Program",
+          "Ordination Leave",
+          "Internal Transfer Program",
+          "Provident Fund",
+          "Wellness and Fitness Benefit"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_training_budget",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Training Budget"
+        ],
+        "retrieved_titles": [
+          "Training Budget"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_password_length",
+        "category": "english_answerable",
+        "expected_titles": [
+          "IT Security and Password Policy"
+        ],
+        "retrieved_titles": [
+          "IT Security and Password Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_vpn_client",
+        "category": "english_answerable",
+        "expected_titles": [
+          "VPN Usage"
+        ],
+        "retrieved_titles": [
+          "VPN Usage",
+          "Remote Work Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_expense_deadline",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Expense Reimbursement"
+        ],
+        "retrieved_titles": [
+          "Expense Reimbursement",
+          "Wellness and Fitness Benefit",
+          "Resignation Process",
+          "Equipment and Laptop Policy",
+          "Corporate Credit Card",
+          "Domestic Travel Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_travel_insurance",
+        "category": "english_answerable",
+        "expected_titles": [
+          "International Travel Insurance"
+        ],
+        "retrieved_titles": [
+          "International Travel Insurance",
+          "International Travel Daily Allowance",
+          "Emergency and Evacuation Procedures"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_standard_support_hours",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Customer Support Service Levels"
+        ],
+        "retrieved_titles": [
+          "Customer Support Service Levels",
+          "Service Credit Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_remote_work_days",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "Hybrid Work Guidelines",
+          "Overtime Policy",
+          "Bereavement and Compassionate Absence",
+          "Parental Leave",
+          "Annual Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_annual_leave_carryover",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Annual Leave"
+        ],
+        "retrieved_titles": [
+          "Annual Leave",
+          "Sick Leave",
+          "Bereavement and Compassionate Absence",
+          "Resignation Process",
+          "Ordination Leave",
+          "Company Holidays"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_sick_leave_certificate",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Sick Leave"
+        ],
+        "retrieved_titles": [
+          "Sick Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_ordination_leave",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Ordination Leave"
+        ],
+        "retrieved_titles": [
+          "Ordination Leave",
+          "Bereavement and Compassionate Absence",
+          "Annual Leave",
+          "Sick Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_maternity_leave",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Parental Leave"
+        ],
+        "retrieved_titles": [
+          "Parental Leave",
+          "Sick Leave",
+          "Bereavement and Compassionate Absence",
+          "Annual Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_salary_payment_date",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Compensation Disbursement Schedule"
+        ],
+        "retrieved_titles": [
+          "Compensation Disbursement Schedule",
+          "Annual Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_probation_duration",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Probation Period"
+        ],
+        "retrieved_titles": [
+          "Onboarding Process",
+          "Ordination Leave",
+          "Equipment and Laptop Policy"
+        ],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_training_budget",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Training Budget"
+        ],
+        "retrieved_titles": [
+          "Training Budget"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_resignation_notice",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Resignation Process"
+        ],
+        "retrieved_titles": [
+          "Resignation Process",
+          "Annual Leave",
+          "Ordination Leave",
+          "Bereavement and Compassionate Absence",
+          "Sick Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_security_incident",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Security Incident Response Process"
+        ],
+        "retrieved_titles": [
+          "Security Incident Response Process",
+          "IT Security and Password Policy",
+          "BYOD Program",
+          "Equipment and Laptop Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_remote_portal",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "Hybrid Work Guidelines",
+          "Equipment and Laptop Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_hr204",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Employee Referral Program"
+        ],
+        "retrieved_titles": [
+          "Employee Referral Program"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_safejourney",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "International Travel Insurance"
+        ],
+        "retrieved_titles": [
+          "International Travel Insurance",
+          "Emergency and Evacuation Procedures"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_platinum_p1",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Customer Support Service Levels"
+        ],
+        "retrieved_titles": [
+          "Customer Support Service Levels",
+          "Support Escalation Process",
+          "Service Credit Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_expense_approval",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Expense Reimbursement"
+        ],
+        "retrieved_titles": [
+          "Expense Reimbursement",
+          "Purchase Requisition and Purchase Orders",
+          "Training Budget",
+          "Domestic Travel Policy",
+          "Corporate Credit Card",
+          "International Travel Daily Allowance"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_ceo_salary",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_home_addresses",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_wifi_password",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_source_credentials",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_performance_rating",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_customer_cards",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "PaySiam Gateway Product Overview",
+          "Company Overview",
+          "ChatServe Product Overview"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_board_minutes",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_acquisition_plan",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Company Overview",
+          "Provident Fund",
+          "ChatServe Product Overview",
+          "Customer Support Service Levels",
+          "PaySiam Gateway Product Overview",
+          "Support Escalation Process"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_biometric_records",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_medical_diagnoses",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_overseas_trip",
+        "category": "multi_section",
+        "expected_titles": [
+          "International Travel Approval Process",
+          "International Travel Daily Allowance",
+          "International Travel Insurance",
+          "International Travel Visa Support"
+        ],
+        "retrieved_titles": [
+          "International Travel Approval Process",
+          "International Travel Daily Allowance",
+          "International Travel Insurance",
+          "Domestic Travel Policy",
+          "International Travel Visa Support"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_new_vendor_purchase",
+        "category": "multi_section",
+        "expected_titles": [
+          "Purchase Requisition and Purchase Orders",
+          "Vendor Onboarding and Registration"
+        ],
+        "retrieved_titles": [
+          "Vendor Onboarding and Registration",
+          "Purchase Requisition and Purchase Orders"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_remote_security",
+        "category": "multi_section",
+        "expected_titles": [
+          "Remote Work Policy",
+          "VPN Usage"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "IT Security and Password Policy",
+          "VPN Usage"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_p1_service_failure",
+        "category": "multi_section",
+        "expected_titles": [
+          "Customer Support Service Levels",
+          "Support Escalation Process",
+          "Service Credit Policy"
+        ],
+        "retrieved_titles": [
+          "Support Escalation Process",
+          "Customer Support Service Levels",
+          "Service Credit Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_new_employee",
+        "category": "multi_section",
+        "expected_titles": [
+          "Onboarding Process",
+          "Probation Period",
+          "Health Benefits"
+        ],
+        "retrieved_titles": [
+          "Probation Period",
+          "Employee Referral Program",
+          "Internal Transfer Program",
+          "Wellness and Fitness Benefit",
+          "Health Benefits",
+          "Provident Fund"
+        ],
+        "hit": true,
+        "recall": 0.6666666666666666,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      }
+    ]
+  },
+  "selected": {
+    "profile_id": "c12-k6-cos0.20-rron-0.01-ctx6000",
+    "config": {
+      "candidate_k": 12,
+      "top_k": 6,
+      "min_cosine": 0.2,
+      "reranker_min_score": 0.01,
+      "max_context_chars": 6000,
+      "reranker_enabled": true
+    },
+    "metrics": {
+      "hit_rate_at_k": 0.9,
+      "recall_at_k": 0.888888888888889,
+      "mrr": 0.9,
+      "false_positive_rate": 0.2,
+      "not_found_discipline": 0.8,
+      "latency_avg_ms": 0.0,
+      "latency_p50_ms": 0.0,
+      "latency_p95_ms": 0.0
+    },
+    "category_metrics": {
+      "english_answerable": {
+        "hit_rate": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      },
+      "thai_answerable": {
+        "hit_rate": 0.7,
+        "recall": 0.7,
+        "mrr": 0.7,
+        "not_found_discipline": 1.0
+      },
+      "mixed_answerable": {
+        "hit_rate": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      },
+      "negative": {
+        "hit_rate": 0.0,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "not_found_discipline": 0.8
+      },
+      "multi_section": {
+        "hit_rate": 1.0,
+        "recall": 0.9333333333333333,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      }
+    },
+    "quality_score": 0.8366666666666667,
+    "passed_hard_gates": true,
+    "passed_safety_target": false,
+    "gate_failures": [],
+    "context_avg_chars": 1776.475,
+    "context_p95_chars": 4460.9,
+    "context_truncation_rate": 0.0,
+    "citation_validity": 1.0,
+    "average_final_hits": 2.375,
+    "cases": [
+      {
+        "case_id": "en_remote_work_days",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "Hybrid Work Guidelines",
+          "Overtime Policy",
+          "Bereavement and Compassionate Absence",
+          "Annual Leave",
+          "Sick Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_annual_leave_carryover",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Annual Leave"
+        ],
+        "retrieved_titles": [
+          "Annual Leave",
+          "Sick Leave",
+          "Resignation Process",
+          "Bereavement and Compassionate Absence",
+          "Probation Period",
+          "Ordination Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_sick_leave_certificate",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Sick Leave"
+        ],
+        "retrieved_titles": [
+          "Sick Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_probation_duration",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Probation Period"
+        ],
+        "retrieved_titles": [
+          "Probation Period",
+          "Employee Referral Program",
+          "Ordination Leave",
+          "Internal Transfer Program",
+          "Provident Fund"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_training_budget",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Training Budget"
+        ],
+        "retrieved_titles": [
+          "Training Budget"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_password_length",
+        "category": "english_answerable",
+        "expected_titles": [
+          "IT Security and Password Policy"
+        ],
+        "retrieved_titles": [
+          "IT Security and Password Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_vpn_client",
+        "category": "english_answerable",
+        "expected_titles": [
+          "VPN Usage"
+        ],
+        "retrieved_titles": [
+          "VPN Usage",
+          "Remote Work Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_expense_deadline",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Expense Reimbursement"
+        ],
+        "retrieved_titles": [
+          "Expense Reimbursement",
+          "Wellness and Fitness Benefit",
+          "Corporate Credit Card",
+          "Domestic Travel Policy",
+          "Overtime Policy",
+          "International Travel Approval Process"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_travel_insurance",
+        "category": "english_answerable",
+        "expected_titles": [
+          "International Travel Insurance"
+        ],
+        "retrieved_titles": [
+          "International Travel Insurance",
+          "International Travel Daily Allowance"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_standard_support_hours",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Customer Support Service Levels"
+        ],
+        "retrieved_titles": [
+          "Customer Support Service Levels",
+          "Service Credit Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_remote_work_days",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "Hybrid Work Guidelines",
+          "Overtime Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_annual_leave_carryover",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Annual Leave"
+        ],
+        "retrieved_titles": [
+          "Annual Leave",
+          "Sick Leave",
+          "Ordination Leave",
+          "Company Holidays"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_sick_leave_certificate",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Sick Leave"
+        ],
+        "retrieved_titles": [
+          "Sick Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_ordination_leave",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Ordination Leave"
+        ],
+        "retrieved_titles": [
+          "Ordination Leave",
+          "Bereavement and Compassionate Absence",
+          "Sick Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_maternity_leave",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Parental Leave"
+        ],
+        "retrieved_titles": [
+          "Bereavement and Compassionate Absence"
+        ],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_salary_payment_date",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Compensation Disbursement Schedule"
+        ],
+        "retrieved_titles": [
+          "Compensation Disbursement Schedule"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_probation_duration",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Probation Period"
+        ],
+        "retrieved_titles": [
+          "Ordination Leave"
+        ],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_training_budget",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Training Budget"
+        ],
+        "retrieved_titles": [
+          "Training Budget"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_resignation_notice",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Resignation Process"
+        ],
+        "retrieved_titles": [
+          "Ordination Leave",
+          "Bereavement and Compassionate Absence",
+          "Sick Leave"
+        ],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_security_incident",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Security Incident Response Process"
+        ],
+        "retrieved_titles": [
+          "Security Incident Response Process",
+          "IT Security and Password Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_remote_portal",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "Hybrid Work Guidelines",
+          "Equipment and Laptop Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_hr204",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Employee Referral Program"
+        ],
+        "retrieved_titles": [
+          "Employee Referral Program"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_safejourney",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "International Travel Insurance"
+        ],
+        "retrieved_titles": [
+          "International Travel Insurance",
+          "Emergency and Evacuation Procedures"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_platinum_p1",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Customer Support Service Levels"
+        ],
+        "retrieved_titles": [
+          "Customer Support Service Levels",
+          "Support Escalation Process",
+          "Service Credit Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_expense_approval",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Expense Reimbursement"
+        ],
+        "retrieved_titles": [
+          "Expense Reimbursement",
+          "Purchase Requisition and Purchase Orders",
+          "Domestic Travel Policy",
+          "Corporate Credit Card",
+          "International Travel Daily Allowance",
+          "Petty Cash Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_ceo_salary",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_home_addresses",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_wifi_password",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_source_credentials",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_performance_rating",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_customer_cards",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "PaySiam Gateway Product Overview",
+          "Company Overview",
+          "ChatServe Product Overview"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_board_minutes",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_acquisition_plan",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Company Overview",
+          "Provident Fund",
+          "ChatServe Product Overview",
+          "Customer Support Service Levels",
+          "PaySiam Gateway Product Overview",
+          "Vendor Invoice and Payment Terms"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_biometric_records",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_medical_diagnoses",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_overseas_trip",
+        "category": "multi_section",
+        "expected_titles": [
+          "International Travel Approval Process",
+          "International Travel Daily Allowance",
+          "International Travel Insurance",
+          "International Travel Visa Support"
+        ],
+        "retrieved_titles": [
+          "International Travel Approval Process",
+          "International Travel Daily Allowance",
+          "International Travel Insurance",
+          "Domestic Travel Policy",
+          "International Travel Visa Support"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_new_vendor_purchase",
+        "category": "multi_section",
+        "expected_titles": [
+          "Purchase Requisition and Purchase Orders",
+          "Vendor Onboarding and Registration"
+        ],
+        "retrieved_titles": [
+          "Vendor Onboarding and Registration",
+          "Purchase Requisition and Purchase Orders"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_remote_security",
+        "category": "multi_section",
+        "expected_titles": [
+          "Remote Work Policy",
+          "VPN Usage"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "IT Security and Password Policy",
+          "VPN Usage"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_p1_service_failure",
+        "category": "multi_section",
+        "expected_titles": [
+          "Customer Support Service Levels",
+          "Support Escalation Process",
+          "Service Credit Policy"
+        ],
+        "retrieved_titles": [
+          "Support Escalation Process",
+          "Customer Support Service Levels",
+          "Service Credit Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_new_employee",
+        "category": "multi_section",
+        "expected_titles": [
+          "Onboarding Process",
+          "Probation Period",
+          "Health Benefits"
+        ],
+        "retrieved_titles": [
+          "Probation Period",
+          "Employee Referral Program",
+          "Internal Transfer Program",
+          "Wellness and Fitness Benefit",
+          "Health Benefits",
+          "Provident Fund"
+        ],
+        "hit": true,
+        "recall": 0.6666666666666666,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      }
+    ]
+  },
+  "selected_without_reranker": {
+    "profile_id": "c12-k6-cos0.20-rroff-none-ctx6000",
+    "config": {
+      "candidate_k": 12,
+      "top_k": 6,
+      "min_cosine": 0.2,
+      "reranker_min_score": null,
+      "max_context_chars": 6000,
+      "reranker_enabled": false
+    },
+    "metrics": {
+      "hit_rate_at_k": 0.8333333333333334,
+      "recall_at_k": 0.8166666666666667,
+      "mrr": 0.7666666666666667,
+      "false_positive_rate": 1.0,
+      "not_found_discipline": 0.0,
+      "latency_avg_ms": 0.0,
+      "latency_p50_ms": 0.0,
+      "latency_p95_ms": 0.0
+    },
+    "category_metrics": {
+      "english_answerable": {
+        "hit_rate": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      },
+      "thai_answerable": {
+        "hit_rate": 0.5,
+        "recall": 0.5,
+        "mrr": 0.3,
+        "not_found_discipline": 1.0
+      },
+      "mixed_answerable": {
+        "hit_rate": 1.0,
+        "recall": 1.0,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      },
+      "negative": {
+        "hit_rate": 0.0,
+        "recall": 0.0,
+        "mrr": 0.0,
+        "not_found_discipline": 0.0
+      },
+      "multi_section": {
+        "hit_rate": 1.0,
+        "recall": 0.9,
+        "mrr": 1.0,
+        "not_found_discipline": 1.0
+      }
+    },
+    "quality_score": 0.5116666666666666,
+    "passed_hard_gates": false,
+    "passed_safety_target": false,
+    "gate_failures": [
+      "not_found_discipline_below_baseline"
+    ],
+    "context_avg_chars": 4440.55,
+    "context_p95_chars": 4848.349999999999,
+    "context_truncation_rate": 0.0,
+    "citation_validity": 1.0,
+    "average_final_hits": 5.925,
+    "cases": [
+      {
+        "case_id": "en_remote_work_days",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "Hybrid Work Guidelines",
+          "Annual Leave",
+          "Sick Leave",
+          "Overtime Policy",
+          "Bereavement and Compassionate Absence"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_annual_leave_carryover",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Annual Leave"
+        ],
+        "retrieved_titles": [
+          "Annual Leave",
+          "Sick Leave",
+          "Bereavement and Compassionate Absence",
+          "Ordination Leave",
+          "Parental Leave",
+          "Overtime Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_sick_leave_certificate",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Sick Leave"
+        ],
+        "retrieved_titles": [
+          "Sick Leave",
+          "Annual Leave",
+          "Bereavement and Compassionate Absence",
+          "Ordination Leave",
+          "Parental Leave",
+          "Remote Work Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_probation_duration",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Probation Period"
+        ],
+        "retrieved_titles": [
+          "Probation Period",
+          "Internal Transfer Program",
+          "Health Benefits",
+          "Ordination Leave",
+          "Onboarding Process",
+          "Employee Referral Program"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_training_budget",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Training Budget"
+        ],
+        "retrieved_titles": [
+          "Training Budget",
+          "Annual Leave",
+          "Equipment and Laptop Policy",
+          "Performance Review Cycle",
+          "Employee Referral Program",
+          "Probation Period"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_password_length",
+        "category": "english_answerable",
+        "expected_titles": [
+          "IT Security and Password Policy"
+        ],
+        "retrieved_titles": [
+          "IT Security and Password Policy",
+          "Probation Period",
+          "BYOD Program",
+          "VPN Usage",
+          "Corporate Credit Card",
+          "Equipment and Laptop Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_vpn_client",
+        "category": "english_answerable",
+        "expected_titles": [
+          "VPN Usage"
+        ],
+        "retrieved_titles": [
+          "VPN Usage",
+          "Remote Work Policy",
+          "IT Security and Password Policy",
+          "BYOD Program",
+          "Equipment and Laptop Policy",
+          "Client Site Visit Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_expense_deadline",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Expense Reimbursement"
+        ],
+        "retrieved_titles": [
+          "Expense Reimbursement",
+          "Domestic Travel Policy",
+          "Annual Leave",
+          "International Travel Visa Support",
+          "International Travel Daily Allowance",
+          "Overtime Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_travel_insurance",
+        "category": "english_answerable",
+        "expected_titles": [
+          "International Travel Insurance"
+        ],
+        "retrieved_titles": [
+          "International Travel Insurance",
+          "International Travel Approval Process",
+          "International Travel Daily Allowance",
+          "International Travel Visa Support",
+          "Domestic Travel Policy",
+          "Health Benefits"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "en_standard_support_hours",
+        "category": "english_answerable",
+        "expected_titles": [
+          "Customer Support Service Levels"
+        ],
+        "retrieved_titles": [
+          "Customer Support Service Levels",
+          "Support Escalation Process",
+          "Service Credit Policy",
+          "Security Incident Response Process",
+          "Hybrid Work Guidelines",
+          "Software Request and Licensing"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_remote_work_days",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [
+          "Hybrid Work Guidelines",
+          "Company Holidays",
+          "Overtime Policy",
+          "International Travel Daily Allowance",
+          "Employee Assistance Program",
+          "Client Site Visit Policy"
+        ],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_annual_leave_carryover",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Annual Leave"
+        ],
+        "retrieved_titles": [
+          "Company Holidays",
+          "International Travel Daily Allowance",
+          "Ordination Leave",
+          "Parking and Commuting",
+          "Meeting Room and Desk Booking",
+          "Client Site Visit Policy"
+        ],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_sick_leave_certificate",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Sick Leave"
+        ],
+        "retrieved_titles": [
+          "Emergency and Evacuation Procedures",
+          "Client Site Visit Policy",
+          "Sick Leave",
+          "Office Access and Visitor Policy",
+          "Domestic Travel Policy",
+          "International Travel Insurance"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 0.3333333333333333,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_ordination_leave",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Ordination Leave"
+        ],
+        "retrieved_titles": [
+          "Compensation Disbursement Schedule",
+          "Overtime Policy",
+          "Hybrid Work Guidelines",
+          "International Travel Daily Allowance",
+          "Bereavement and Compassionate Absence",
+          "Ordination Leave"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 0.16666666666666666,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_maternity_leave",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Parental Leave"
+        ],
+        "retrieved_titles": [
+          "Hybrid Work Guidelines",
+          "Compensation Disbursement Schedule",
+          "Meeting Room and Desk Booking",
+          "Company Holidays",
+          "Ordination Leave",
+          "Client Site Visit Policy"
+        ],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_salary_payment_date",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Compensation Disbursement Schedule"
+        ],
+        "retrieved_titles": [
+          "Compensation Disbursement Schedule",
+          "Petty Cash Policy",
+          "Expense Reimbursement",
+          "Company Holidays",
+          "Service Credit Policy",
+          "Wellness and Fitness Benefit"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_probation_duration",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Probation Period"
+        ],
+        "retrieved_titles": [
+          "Hybrid Work Guidelines",
+          "Overtime Policy",
+          "Company Holidays",
+          "Meeting Room and Desk Booking",
+          "Remote Work Policy",
+          "Compensation Disbursement Schedule"
+        ],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_training_budget",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Training Budget"
+        ],
+        "retrieved_titles": [
+          "Training Budget",
+          "Office Access and Visitor Policy",
+          "Company Overview",
+          "Ordination Leave",
+          "Employee Referral Program"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_resignation_notice",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Resignation Process"
+        ],
+        "retrieved_titles": [
+          "Overtime Policy",
+          "Sick Leave",
+          "Emergency and Evacuation Procedures",
+          "Ordination Leave",
+          "International Travel Daily Allowance",
+          "Bereavement and Compassionate Absence"
+        ],
+        "hit": false,
+        "recall": 0.0,
+        "reciprocal_rank": 0.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "th_security_incident",
+        "category": "thai_answerable",
+        "expected_titles": [
+          "Security Incident Response Process"
+        ],
+        "retrieved_titles": [
+          "Emergency and Evacuation Procedures",
+          "Security Incident Response Process",
+          "IT Security and Password Policy",
+          "Training Budget"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 0.5,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_remote_portal",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Remote Work Policy"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "Hybrid Work Guidelines",
+          "Client Site Visit Policy",
+          "Meeting Room and Desk Booking",
+          "PaySiam Gateway Product Overview",
+          "Onboarding Process"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_hr204",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Employee Referral Program"
+        ],
+        "retrieved_titles": [
+          "Employee Referral Program",
+          "Compensation Disbursement Schedule",
+          "Resignation Process",
+          "Overtime Policy",
+          "Purchase Requisition and Purchase Orders",
+          "Expense Reimbursement"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_safejourney",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "International Travel Insurance"
+        ],
+        "retrieved_titles": [
+          "International Travel Insurance",
+          "Emergency and Evacuation Procedures",
+          "Client Site Visit Policy",
+          "Domestic Travel Policy",
+          "International Travel Approval Process",
+          "Health Benefits"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_platinum_p1",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Customer Support Service Levels"
+        ],
+        "retrieved_titles": [
+          "Customer Support Service Levels",
+          "Support Escalation Process",
+          "Service Credit Policy",
+          "Corporate Credit Card",
+          "ChatServe Product Overview",
+          "Health Benefits"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "mixed_expense_approval",
+        "category": "mixed_answerable",
+        "expected_titles": [
+          "Expense Reimbursement"
+        ],
+        "retrieved_titles": [
+          "Expense Reimbursement",
+          "Domestic Travel Policy",
+          "International Travel Approval Process",
+          "International Travel Daily Allowance",
+          "Petty Cash Policy",
+          "International Travel Insurance"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_ceo_salary",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Training Budget",
+          "Performance Review Cycle",
+          "Employee Referral Program",
+          "Corporate Credit Card",
+          "Equipment and Laptop Policy",
+          "Annual Leave"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_home_addresses",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Equipment and Laptop Policy",
+          "Resignation Process",
+          "Employee Referral Program",
+          "Emergency and Evacuation Procedures",
+          "IT Security and Password Policy",
+          "Annual Leave"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_wifi_password",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "IT Security and Password Policy",
+          "VPN Usage",
+          "Equipment and Laptop Policy",
+          "Office Access and Visitor Policy",
+          "BYOD Program",
+          "Hybrid Work Guidelines"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_source_credentials",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "IT Security and Password Policy",
+          "Acceptable Use of AI Tools",
+          "Data Classification and Handling",
+          "Service Credit Policy",
+          "Software Request and Licensing",
+          "Security Incident Response Process"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_performance_rating",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Performance Review Cycle",
+          "Employee Referral Program",
+          "Compensation Disbursement Schedule",
+          "Provident Fund",
+          "Overtime Policy",
+          "Internal Transfer Program"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_customer_cards",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Corporate Credit Card",
+          "PaySiam Gateway Product Overview",
+          "Service Credit Policy",
+          "Petty Cash Policy",
+          "Vendor Invoice and Payment Terms",
+          "IT Security and Password Policy"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_board_minutes",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Meeting Room and Desk Booking",
+          "Data Classification and Handling",
+          "Security Incident Response Process",
+          "Resignation Process",
+          "Performance Review Cycle",
+          "Grievance and Misconduct Reporting"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_acquisition_plan",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Company Holidays",
+          "Ordination Leave",
+          "Company Overview",
+          "Vendor Invoice and Payment Terms",
+          "Provident Fund",
+          "Customer Support Service Levels"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_biometric_records",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Office Access and Visitor Policy",
+          "IT Security and Password Policy",
+          "BYOD Program",
+          "Equipment and Laptop Policy",
+          "Resignation Process",
+          "Acceptable Use of AI Tools"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "neg_medical_diagnoses",
+        "category": "negative",
+        "expected_titles": [],
+        "retrieved_titles": [
+          "Employee Assistance Program",
+          "Grievance and Misconduct Reporting",
+          "Health Benefits",
+          "Sick Leave",
+          "Data Classification and Handling",
+          "Probation Period"
+        ],
+        "hit": false,
+        "recall": null,
+        "reciprocal_rank": null,
+        "false_positive": true,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_overseas_trip",
+        "category": "multi_section",
+        "expected_titles": [
+          "International Travel Approval Process",
+          "International Travel Daily Allowance",
+          "International Travel Insurance",
+          "International Travel Visa Support"
+        ],
+        "retrieved_titles": [
+          "International Travel Visa Support",
+          "International Travel Approval Process",
+          "International Travel Insurance",
+          "International Travel Daily Allowance",
+          "Domestic Travel Policy",
+          "Client Site Visit Policy"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_new_vendor_purchase",
+        "category": "multi_section",
+        "expected_titles": [
+          "Purchase Requisition and Purchase Orders",
+          "Vendor Onboarding and Registration"
+        ],
+        "retrieved_titles": [
+          "Purchase Requisition and Purchase Orders",
+          "Vendor Onboarding and Registration",
+          "Vendor Invoice and Payment Terms",
+          "Software Request and Licensing",
+          "Onboarding Process",
+          "Probation Period"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_remote_security",
+        "category": "multi_section",
+        "expected_titles": [
+          "Remote Work Policy",
+          "VPN Usage"
+        ],
+        "retrieved_titles": [
+          "Remote Work Policy",
+          "Hybrid Work Guidelines",
+          "Office Access and Visitor Policy",
+          "International Travel Approval Process",
+          "IT Security and Password Policy",
+          "Client Site Visit Policy"
+        ],
+        "hit": true,
+        "recall": 0.5,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_p1_service_failure",
+        "category": "multi_section",
+        "expected_titles": [
+          "Customer Support Service Levels",
+          "Support Escalation Process",
+          "Service Credit Policy"
+        ],
+        "retrieved_titles": [
+          "Support Escalation Process",
+          "Service Credit Policy",
+          "Security Incident Response Process",
+          "Customer Support Service Levels",
+          "Corporate Credit Card",
+          "Emergency and Evacuation Procedures"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      },
+      {
+        "case_id": "multi_new_employee",
+        "category": "multi_section",
+        "expected_titles": [
+          "Onboarding Process",
+          "Probation Period",
+          "Health Benefits"
+        ],
+        "retrieved_titles": [
+          "Probation Period",
+          "Health Benefits",
+          "Onboarding Process",
+          "Internal Transfer Program",
+          "Provident Fund",
+          "Employee Referral Program"
+        ],
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "false_positive": false,
+        "latency_ms": 0.0
+      }
+    ]
+  },
+  "latency": {
+    "estimated_online_avg_ms": 1917.749607350003,
+    "estimated_online_p50_ms": 1847.6263955001286,
+    "estimated_online_p95_ms": 2361.6640648502175,
+    "local_rerank_context_avg_ms": 1346.988640725067,
+    "local_rerank_context_p95_ms": 1612.0598330498522,
+    "embedding_avg_ms": 561.3130343999501,
+    "embedding_p95_ms": 889.7733666499555
+  },
+  "leaderboard": [
+    {
+      "profile_id": "c30-k6-cos0.00-rron-0.01-ctx4000",
+      "config": {
+        "candidate_k": 30,
+        "top_k": 6,
+        "min_cosine": 0.0,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 4000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9666666666666667,
+        "recall_at_k": 0.9555555555555556,
+        "mrr": 0.9666666666666667,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.9,
+          "recall": 0.9,
+          "mrr": 0.9,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.9033333333333333,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 2009.8,
+      "context_p95_chars": 3994.0,
+      "context_truncation_rate": 0.225,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.8
+    },
+    {
+      "profile_id": "c30-k6-cos0.00-rron-0.01-ctx6000",
+      "config": {
+        "candidate_k": 30,
+        "top_k": 6,
+        "min_cosine": 0.0,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 6000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9666666666666667,
+        "recall_at_k": 0.9555555555555556,
+        "mrr": 0.9666666666666667,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.9,
+          "recall": 0.9,
+          "mrr": 0.9,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.9033333333333333,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 2100.65,
+      "context_p95_chars": 4484.15,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.825
+    },
+    {
+      "profile_id": "c30-k6-cos0.00-rron-0.01-ctx12000",
+      "config": {
+        "candidate_k": 30,
+        "top_k": 6,
+        "min_cosine": 0.0,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 12000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9666666666666667,
+        "recall_at_k": 0.9555555555555556,
+        "mrr": 0.9666666666666667,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.9,
+          "recall": 0.9,
+          "mrr": 0.9,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.9033333333333333,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 2100.65,
+      "context_p95_chars": 4484.15,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.825
+    },
+    {
+      "profile_id": "c30-k6-cos0.10-rron-0.01-ctx4000",
+      "config": {
+        "candidate_k": 30,
+        "top_k": 6,
+        "min_cosine": 0.1,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 4000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9666666666666667,
+        "recall_at_k": 0.9555555555555556,
+        "mrr": 0.9666666666666667,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.9,
+          "recall": 0.9,
+          "mrr": 0.9,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.9033333333333333,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 2009.8,
+      "context_p95_chars": 3994.0,
+      "context_truncation_rate": 0.225,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.8
+    },
+    {
+      "profile_id": "c30-k6-cos0.10-rron-0.01-ctx6000",
+      "config": {
+        "candidate_k": 30,
+        "top_k": 6,
+        "min_cosine": 0.1,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 6000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9666666666666667,
+        "recall_at_k": 0.9555555555555556,
+        "mrr": 0.9666666666666667,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.9,
+          "recall": 0.9,
+          "mrr": 0.9,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.9033333333333333,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 2100.65,
+      "context_p95_chars": 4484.15,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.825
+    },
+    {
+      "profile_id": "c30-k6-cos0.10-rron-0.01-ctx12000",
+      "config": {
+        "candidate_k": 30,
+        "top_k": 6,
+        "min_cosine": 0.1,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 12000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9666666666666667,
+        "recall_at_k": 0.9555555555555556,
+        "mrr": 0.9666666666666667,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.9,
+          "recall": 0.9,
+          "mrr": 0.9,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.9033333333333333,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 2100.65,
+      "context_p95_chars": 4484.15,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.825
+    },
+    {
+      "profile_id": "c12-k6-cos0.00-rron-0.01-ctx4000",
+      "config": {
+        "candidate_k": 12,
+        "top_k": 6,
+        "min_cosine": 0.0,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 4000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 1727.575,
+      "context_p95_chars": 3993.05,
+      "context_truncation_rate": 0.15,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.375
+    },
+    {
+      "profile_id": "c12-k6-cos0.00-rron-0.01-ctx6000",
+      "config": {
+        "candidate_k": 12,
+        "top_k": 6,
+        "min_cosine": 0.0,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 6000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 1795.475,
+      "context_p95_chars": 4460.9,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.4
+    },
+    {
+      "profile_id": "c12-k6-cos0.00-rron-0.01-ctx12000",
+      "config": {
+        "candidate_k": 12,
+        "top_k": 6,
+        "min_cosine": 0.0,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 12000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 1795.475,
+      "context_p95_chars": 4460.9,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.4
+    },
+    {
+      "profile_id": "c12-k6-cos0.10-rron-0.01-ctx4000",
+      "config": {
+        "candidate_k": 12,
+        "top_k": 6,
+        "min_cosine": 0.1,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 4000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 1727.575,
+      "context_p95_chars": 3993.05,
+      "context_truncation_rate": 0.15,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.375
+    },
+    {
+      "profile_id": "c12-k6-cos0.10-rron-0.01-ctx6000",
+      "config": {
+        "candidate_k": 12,
+        "top_k": 6,
+        "min_cosine": 0.1,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 6000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 1795.475,
+      "context_p95_chars": 4460.9,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.4
+    },
+    {
+      "profile_id": "c12-k6-cos0.10-rron-0.01-ctx12000",
+      "config": {
+        "candidate_k": 12,
+        "top_k": 6,
+        "min_cosine": 0.1,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 12000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 1795.475,
+      "context_p95_chars": 4460.9,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.4
+    },
+    {
+      "profile_id": "c12-k6-cos0.20-rron-0.01-ctx4000",
+      "config": {
+        "candidate_k": 12,
+        "top_k": 6,
+        "min_cosine": 0.2,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 4000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 1708.575,
+      "context_p95_chars": 3993.05,
+      "context_truncation_rate": 0.15,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.35
+    },
+    {
+      "profile_id": "c12-k6-cos0.20-rron-0.01-ctx6000",
+      "config": {
+        "candidate_k": 12,
+        "top_k": 6,
+        "min_cosine": 0.2,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 6000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 1776.475,
+      "context_p95_chars": 4460.9,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.375
+    },
+    {
+      "profile_id": "c12-k6-cos0.20-rron-0.01-ctx12000",
+      "config": {
+        "candidate_k": 12,
+        "top_k": 6,
+        "min_cosine": 0.2,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 12000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 1776.475,
+      "context_p95_chars": 4460.9,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.375
+    },
+    {
+      "profile_id": "c24-k6-cos0.00-rron-0.01-ctx4000",
+      "config": {
+        "candidate_k": 24,
+        "top_k": 6,
+        "min_cosine": 0.0,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 4000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 1941.175,
+      "context_p95_chars": 3993.05,
+      "context_truncation_rate": 0.2,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.7
+    },
+    {
+      "profile_id": "c24-k6-cos0.00-rron-0.01-ctx6000",
+      "config": {
+        "candidate_k": 24,
+        "top_k": 6,
+        "min_cosine": 0.0,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 6000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 2028.925,
+      "context_p95_chars": 4484.15,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.725
+    },
+    {
+      "profile_id": "c24-k6-cos0.00-rron-0.01-ctx12000",
+      "config": {
+        "candidate_k": 24,
+        "top_k": 6,
+        "min_cosine": 0.0,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 12000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 2028.925,
+      "context_p95_chars": 4484.15,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.725
+    },
+    {
+      "profile_id": "c24-k6-cos0.10-rron-0.01-ctx4000",
+      "config": {
+        "candidate_k": 24,
+        "top_k": 6,
+        "min_cosine": 0.1,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 4000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 1941.175,
+      "context_p95_chars": 3993.05,
+      "context_truncation_rate": 0.2,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.7
+    },
+    {
+      "profile_id": "c24-k6-cos0.10-rron-0.01-ctx6000",
+      "config": {
+        "candidate_k": 24,
+        "top_k": 6,
+        "min_cosine": 0.1,
+        "reranker_min_score": 0.01,
+        "max_context_chars": 6000,
+        "reranker_enabled": true
+      },
+      "metrics": {
+        "hit_rate_at_k": 0.9,
+        "recall_at_k": 0.888888888888889,
+        "mrr": 0.9,
+        "false_positive_rate": 0.2,
+        "not_found_discipline": 0.8,
+        "latency_avg_ms": 0.0,
+        "latency_p50_ms": 0.0,
+        "latency_p95_ms": 0.0
+      },
+      "category_metrics": {
+        "english_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "thai_answerable": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "not_found_discipline": 1.0
+        },
+        "mixed_answerable": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        },
+        "negative": {
+          "hit_rate": 0.0,
+          "recall": 0.0,
+          "mrr": 0.0,
+          "not_found_discipline": 0.8
+        },
+        "multi_section": {
+          "hit_rate": 1.0,
+          "recall": 0.9333333333333333,
+          "mrr": 1.0,
+          "not_found_discipline": 1.0
+        }
+      },
+      "quality_score": 0.8366666666666667,
+      "passed_hard_gates": true,
+      "passed_safety_target": false,
+      "gate_failures": [],
+      "context_avg_chars": 2028.925,
+      "context_p95_chars": 4484.15,
+      "context_truncation_rate": 0.0,
+      "citation_validity": 1.0,
+      "average_final_hits": 2.725
+    }
+  ]
+}

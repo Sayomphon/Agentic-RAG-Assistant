@@ -18,7 +18,12 @@ from __future__ import annotations
 import logging
 from functools import lru_cache
 
-from src.config import RERANKER_ENABLED, SEARCH_MODE
+from src.config import (
+    HYBRID_MIN_COSINE,
+    MIN_COSINE,
+    RERANKER_ENABLED,
+    SEARCH_MODE,
+)
 from src.retrievers.base import Chunk, Retriever, load_chunks
 from src.retrievers.keyword import BM25Retriever
 
@@ -84,6 +89,9 @@ def _build_retriever(mode: str) -> Retriever:
     try:
         dense = OpenAIEmbeddingRetriever(
             list(_shared_chunks()),
+            min_cosine=(
+                MIN_COSINE if mode == "semantic" else HYBRID_MIN_COSINE
+            ),
             # In hybrid, BM25 already runs alongside dense — a dense-side
             # fallback would just duplicate its evidence during fusion.
             fallback=keyword if mode == "semantic" else None,

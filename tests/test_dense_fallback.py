@@ -14,6 +14,7 @@ from unittest.mock import Mock, patch
 
 from openai import OpenAIError
 
+from src.config import HYBRID_MIN_COSINE, MIN_COSINE
 from src.retrievers import factory
 from src.retrievers.base import Chunk
 from src.retrievers.dense import EmbeddingIndexError, OpenAIEmbeddingRetriever
@@ -79,6 +80,23 @@ class FactoryDegradationTests(unittest.TestCase):
 
         self.assertIsInstance(retriever, RerankingRetriever)
         self.assertEqual(retriever.SOURCE, "hybrid")
+
+    @patch("src.retrievers.dense.OpenAIEmbeddingRetriever")
+    def test_semantic_and_hybrid_use_independent_cosine_gates(
+        self,
+        mock_dense: Mock,
+    ) -> None:
+        mock_dense.return_value = Mock()
+
+        factory.get_retriever("semantic")
+        factory.get_retriever("hybrid")
+
+        semantic_call, hybrid_call = mock_dense.call_args_list
+        self.assertEqual(semantic_call.kwargs["min_cosine"], MIN_COSINE)
+        self.assertEqual(
+            hybrid_call.kwargs["min_cosine"],
+            HYBRID_MIN_COSINE,
+        )
 
 
 if __name__ == "__main__":

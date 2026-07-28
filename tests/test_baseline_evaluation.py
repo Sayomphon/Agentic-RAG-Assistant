@@ -84,7 +84,15 @@ class BaselineDatasetTests(unittest.TestCase):
             )
 
     def test_versioned_manifest_matches_dataset_corpus_and_config(self) -> None:
-        self.assertEqual(verify_manifest(self.cases), expected_manifest(self.cases))
+        recorded = verify_manifest(
+            self.cases,
+            require_current_config=False,
+        )
+        current = expected_manifest(self.cases)
+        self.assertEqual(recorded["dataset_sha256"], current["dataset_sha256"])
+        self.assertEqual(recorded["corpus"], current["corpus"])
+        self.assertEqual(recorded["retrieval_config"]["top_k"], 4)
+        self.assertEqual(recorded["retrieval_config"]["min_cosine"], 0.38)
 
 
 class BaselineSnapshotTests(unittest.TestCase):
