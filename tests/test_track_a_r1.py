@@ -13,11 +13,13 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from src.evaluation.baseline_dataset import load_baseline_cases
 from src.evaluation.run_track_a_closure import _parse_args
 from src.evaluation.track_a_closure import load_track_a_closure_manifest
 from src.evaluation.track_a_r1 import (
     PHASE0_RESULTS_PATH,
     R1_BASELINE_ID,
+    R1_RESULTS_JSON_PATH,
     R1_SCHEMA_VERSION,
     TRACK_A_CLOSURE_MANIFEST_PATH,
     R1ExecutionError,
@@ -33,8 +35,10 @@ from src.evaluation.track_a_r1 import (
     load_r1_artifact,
     validate_legacy_worker_payload,
     validate_r1_artifact,
+    verify_r1_artifact_provenance,
     write_r1_artifacts,
 )
+from src.retrievers.base import load_chunks
 
 
 def _case_for_top_k(
@@ -407,6 +411,22 @@ class R1ArtifactTests(unittest.TestCase):
                     json_path=json_path,
                     markdown_path=markdown_path,
                 )
+
+    def test_official_artifact_contains_no_raw_queries_or_bodies(self) -> None:
+        self.assertTrue(R1_RESULTS_JSON_PATH.is_file())
+        artifact = verify_r1_artifact_provenance()
+        serialized = R1_RESULTS_JSON_PATH.read_text(encoding="utf-8")
+
+        self.assertEqual(
+            artifact["provenance"]["provider_failure_count"],
+            0,
+        )
+        self.assertEqual(artifact["provenance"]["fallback_count"], 0)
+        for case in load_baseline_cases():
+            self.assertNotIn(case["query"], serialized)
+        for chunk in load_chunks():
+            body_fingerprint = chunk.text.strip()[:120]
+            self.assertNotIn(body_fingerprint, serialized)
 
 
 class R1CommandBoundaryTests(unittest.TestCase):

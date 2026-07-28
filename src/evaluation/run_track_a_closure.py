@@ -15,7 +15,7 @@ from src.evaluation.track_a_r1 import (
     R1ExecutionError,
     R1ValidationError,
     build_r1_artifact,
-    load_r1_artifact,
+    verify_r1_artifact_provenance,
     write_r1_artifacts,
 )
 
@@ -92,7 +92,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return 0
     if args.verify_r1_artifact:
-        artifact = load_r1_artifact()
+        artifact = verify_r1_artifact_provenance()
         print(
             f"Verified {artifact['baseline_id']} at "
             f"{artifact['provenance']['evaluation_commit']}."

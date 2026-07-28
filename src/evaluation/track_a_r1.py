@@ -1446,6 +1446,47 @@ def load_r1_artifact(
     return validate_r1_artifact(_load_json_bytes(path.read_bytes(), "R1 artifact"))
 
 
+def verify_r1_artifact_provenance(
+    path: Path = R1_RESULTS_JSON_PATH,
+) -> dict[str, object]:
+    """Verify recorded file identities against Git and frozen local evidence."""
+    artifact = load_r1_artifact(path)
+    provenance = cast(Mapping[str, object], artifact["provenance"])
+    pre_upgrade_commit = cast(str, provenance["pre_upgrade_commit"])
+    evaluation_commit = cast(str, provenance["evaluation_commit"])
+
+    requirements = cast(
+        Sequence[Mapping[str, object]],
+        provenance["requirements"],
+    )
+    for requirement in requirements:
+        relative_path = cast(str, requirement["path"])
+        if requirement["sha256"] != _git_blob_digest(
+            pre_upgrade_commit,
+            relative_path,
+        ):
+            raise R1ValidationError(
+                f"Legacy dependency identity does not match {relative_path}."
+            )
+    worker = cast(Mapping[str, object], provenance["worker"])
+    if worker["sha256"] != _git_blob_digest(
+        evaluation_commit,
+        cast(str, worker["path"]),
+    ):
+        raise R1ValidationError("Legacy worker identity does not match Git.")
+
+    profiles = cast(
+        Mapping[str, Mapping[str, object]],
+        artifact["profiles"],
+    )
+    post_profile = profiles["post_track_a_selected_top_k_6"]
+    evidence = cast(Mapping[str, object], post_profile["evidence"])
+    evidence_path = PROJECT_ROOT / cast(str, evidence["path"])
+    if _sha256_file(evidence_path) != evidence["sha256"]:
+        raise R1ValidationError("Post-Track-A evidence identity does not match.")
+    return artifact
+
+
 def _percent(value: object) -> str:
     return f"{float(value):.1%}"
 
