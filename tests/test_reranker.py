@@ -399,6 +399,64 @@ class RerankingRetrieverTests(unittest.TestCase):
         ).build(hits)
         self.assertEqual(context.snippets, ("[Section 0]\nEvidence 0",))
 
+    def test_secondary_fails_closed_for_high_risk_query(self) -> None:
+        cascade = CascadingReranker(
+            _FailingReranker(),
+            _StaticReranker([0.8], "secondary-model"),
+        )
+        retriever = RerankingRetriever(
+            _BaseRetriever([_hit(0)]),
+            cascade,
+            candidate_k=1,
+            secondary_policy="emergency_low_risk_only",
+        )
+
+        hits = retriever.search(
+            "Who approves an expense claim?",
+            top_k=1,
+        )
+
+        self.assertEqual(hits, [])
+        self.assertEqual(retriever.secondary_policy_rejection_count, 1)
+        self.assertEqual(retriever.fail_closed_count, 1)
+
+    def test_secondary_fails_closed_for_multi_section_query(self) -> None:
+        cascade = CascadingReranker(
+            _FailingReranker(),
+            _StaticReranker([0.8], "secondary-model"),
+        )
+        retriever = RerankingRetriever(
+            _BaseRetriever([_hit(0)]),
+            cascade,
+            candidate_k=1,
+            secondary_policy="emergency_low_risk_only",
+        )
+
+        hits = retriever.search(
+            "What are the allowance, insurance, and visa rules?",
+            top_k=1,
+        )
+
+        self.assertEqual(hits, [])
+        self.assertEqual(retriever.secondary_policy_rejection_count, 1)
+
+    def test_secondary_remains_available_for_low_risk_single_intent(self) -> None:
+        cascade = CascadingReranker(
+            _FailingReranker(),
+            _StaticReranker([0.8], "secondary-model"),
+        )
+        retriever = RerankingRetriever(
+            _BaseRetriever([_hit(0)]),
+            cascade,
+            candidate_k=1,
+            secondary_policy="emergency_low_risk_only",
+        )
+
+        hits = retriever.search("Where is the cafeteria?", top_k=1)
+
+        self.assertEqual(len(hits), 1)
+        self.assertEqual(retriever.secondary_policy_rejection_count, 0)
+
     def test_failure_path_not_found_discipline_is_100_percent(self) -> None:
         retriever = RerankingRetriever(
             _BaseRetriever([_hit(0)]),

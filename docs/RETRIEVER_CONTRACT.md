@@ -76,9 +76,13 @@ Initialization and query-time failures have different boundaries:
 5. Secondary use, Secondary failure, fail-closed, fusion fallback, active
    model, and the last stable reason code remain visible through additive
    telemetry properties without changing `search(query, top_k)`.
-6. Fallback hits retain the fallback retriever's provenance; evaluation must
+6. The `emergency_low_risk_only` Secondary policy fails closed for high-risk
+   or multi-section intent. Track A A6 evidence shows the smaller model is not
+   quality-equivalent for multi-section retrieval, so a successful Secondary
+   inference is not sufficient authorization to expose its evidence.
+7. Fallback hits retain the fallback retriever's provenance; evaluation must
    not report Secondary/fallback output as a healthy Primary baseline.
-7. Errors and logs must not include API keys, raw credentials, raw queries,
+8. Errors and logs must not include API keys, raw credentials, raw queries,
    full prompts, raw exception details, or document bodies.
 
 The final controlled-error/not-found decision remains outside this protocol;

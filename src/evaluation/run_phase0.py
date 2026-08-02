@@ -216,6 +216,9 @@ def _runtime_health(retriever: Retriever) -> dict[str, object]:
         "secondary_reranker_failure_count": int(
             getattr(retriever, "secondary_reranker_failure_count", 0)
         ),
+        "secondary_policy_rejection_count": int(
+            getattr(retriever, "secondary_policy_rejection_count", 0)
+        ),
         "fail_closed_count": int(
             getattr(retriever, "fail_closed_count", 0)
         ),
@@ -242,6 +245,9 @@ def _assert_healthy_runtime(
     primary_failures = int(health["primary_reranker_failure_count"])
     secondary_usage = int(health["secondary_reranker_usage_count"])
     secondary_failures = int(health["secondary_reranker_failure_count"])
+    secondary_policy_rejections = int(
+        health["secondary_policy_rejection_count"]
+    )
     fail_closed = int(health["fail_closed_count"])
     fusion_fallbacks = int(health["fusion_fallback_count"])
     if (
@@ -249,6 +255,7 @@ def _assert_healthy_runtime(
         or primary_failures
         or secondary_usage
         or secondary_failures
+        or secondary_policy_rejections
         or fail_closed
         or fusion_fallbacks
     ):
@@ -257,6 +264,7 @@ def _assert_healthy_runtime(
             f"primary_reranker_failures={primary_failures}, "
             f"secondary_usage={secondary_usage}, "
             f"secondary_failures={secondary_failures}, "
+            f"secondary_policy_rejections={secondary_policy_rejections}, "
             f"fail_closed={fail_closed}, "
             f"fusion_fallbacks={fusion_fallbacks}. Refusing to freeze "
             "degraded output as a healthy Phase 0 baseline."
@@ -316,9 +324,9 @@ def _build_report(
     health_lines = [
         "| mode | implementation | source | query failures "
         "| primary failures | secondary uses | secondary failures "
-        "| fail closed | fusion fallback | active model "
+        "| secondary policy rejects | fail closed | fusion fallback | active model "
         "| answerability rejections |",
-        "|---|---|---|---:|---:|---:|---:|---:|---:|---|---:|",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|---:|",
     ]
     for mode, health in health_by_mode.items():
         health_lines.append(
@@ -327,6 +335,7 @@ def _build_report(
             f"{health['primary_reranker_failure_count']} | "
             f"{health['secondary_reranker_usage_count']} | "
             f"{health['secondary_reranker_failure_count']} | "
+            f"{health['secondary_policy_rejection_count']} | "
             f"{health['fail_closed_count']} | "
             f"{health['fusion_fallback_count']} | "
             f"{health['active_reranker_model'] or '—'} | "

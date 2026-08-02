@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import unittest
 from pathlib import Path
@@ -60,9 +61,61 @@ class RetrievalProfileConfigTests(unittest.TestCase):
         self.assertEqual(profile.hybrid_min_cosine, 0.20)
         self.assertEqual(profile.reranker_min_score, 0.01)
         self.assertEqual(profile.reranker_batch_size, 4)
+        self.assertEqual(profile.reranker_max_length, 512)
         self.assertEqual(profile.reranker_timeout_seconds, 10.0)
         self.assertEqual(profile.max_context_chars, 6_000)
         self.assertEqual(profile.reranker_failure_policy, "fail_closed")
+        self.assertEqual(profile.secondary_policy, "all_supported")
+
+    def test_m1_candidate_profile_is_versioned_and_bounded(self) -> None:
+        profile = _RETRIEVAL_PROFILES["track_a_balanced_v2"]
+
+        self.assertEqual(profile.candidate_k, 10)
+        self.assertEqual(profile.top_k, 6)
+        self.assertEqual(profile.reranker_batch_size, 4)
+        self.assertEqual(profile.reranker_max_length, 128)
+        self.assertEqual(profile.reranker_min_score, 0.01)
+        self.assertEqual(
+            profile.secondary_policy,
+            "emergency_low_risk_only",
+        )
+
+    def test_m1_candidate_document_matches_runtime_profile(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        payload = json.loads(
+            (
+                project_root
+                / "src"
+                / "evaluation"
+                / "configs"
+                / "track_a_balanced_v2.json"
+            ).read_text(encoding="utf-8")
+        )
+        profile = _RETRIEVAL_PROFILES["track_a_balanced_v2"]
+
+        self.assertEqual(payload["schema_version"], "track-a-runtime-profile-v2")
+        self.assertEqual(payload["profile_id"], "track_a_balanced_v2")
+        self.assertEqual(payload["candidate_k"], profile.candidate_k)
+        self.assertEqual(payload["top_k"], profile.top_k)
+        self.assertEqual(
+            payload["reranker_max_length"],
+            profile.reranker_max_length,
+        )
+        self.assertEqual(
+            payload["secondary_policy"],
+            profile.secondary_policy,
+        )
+        self.assertRegex(
+            payload["reranker_model_revision"],
+            r"^[0-9a-f]{40}$",
+        )
+        self.assertRegex(
+            payload["secondary_model_revision"],
+            r"^[0-9a-f]{40}$",
+        )
+        self.assertTrue(
+            payload["selection_evidence"]["requires_r3_v3_before_approval"]
+        )
 
     def test_explicit_enumerated_override_is_validated(self) -> None:
         allowed = frozenset({"fail_closed", "fusion_order"})

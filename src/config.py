@@ -76,9 +76,11 @@ class RetrievalProfile:
     hybrid_min_cosine: float
     reranker_min_score: float | None
     reranker_batch_size: int
+    reranker_max_length: int
     reranker_timeout_seconds: float
     max_context_chars: int
     reranker_failure_policy: str
+    secondary_policy: str
 
 
 _RETRIEVAL_PROFILES = {
@@ -90,9 +92,11 @@ _RETRIEVAL_PROFILES = {
         hybrid_min_cosine=0.20,
         reranker_min_score=0.01,
         reranker_batch_size=4,
+        reranker_max_length=512,
         reranker_timeout_seconds=10.0,
         max_context_chars=6_000,
         reranker_failure_policy="fail_closed",
+        secondary_policy="emergency_low_risk_only",
     ),
     # Official Track A settings selected by the versioned Step 3 evidence.
     "track_a_balanced_v1": RetrievalProfile(
@@ -102,9 +106,26 @@ _RETRIEVAL_PROFILES = {
         hybrid_min_cosine=0.20,
         reranker_min_score=0.01,
         reranker_batch_size=4,
+        reranker_max_length=512,
         reranker_timeout_seconds=10.0,
         max_context_chars=6_000,
         reranker_failure_policy="fail_closed",
+        secondary_policy="all_supported",
+    ),
+    # M1 remediation candidate. It is not an approved release identity until
+    # the versioned R3/R4 evidence and Human/Product gates complete.
+    "track_a_balanced_v2": RetrievalProfile(
+        search_mode="hybrid",
+        candidate_k=10,
+        top_k=6,
+        hybrid_min_cosine=0.20,
+        reranker_min_score=0.01,
+        reranker_batch_size=4,
+        reranker_max_length=128,
+        reranker_timeout_seconds=10.0,
+        max_context_chars=6_000,
+        reranker_failure_policy="fail_closed",
+        secondary_policy="emergency_low_risk_only",
     ),
 }
 
@@ -206,7 +227,12 @@ RERANKER_TIMEOUT_SECONDS: float = float(
 RERANKER_MAX_CANDIDATES: int = int(
     os.getenv("RERANKER_MAX_CANDIDATES", "30")
 )
-RERANKER_MAX_LENGTH: int = int(os.getenv("RERANKER_MAX_LENGTH", "512"))
+RERANKER_MAX_LENGTH: int = int(
+    os.getenv(
+        "RERANKER_MAX_LENGTH",
+        str(ACTIVE_RETRIEVAL_PROFILE.reranker_max_length),
+    )
+)
 RERANKER_MIN_SCORE: float | None = _env_optional_float(
     "RERANKER_MIN_SCORE",
     ACTIVE_RETRIEVAL_PROFILE.reranker_min_score,
@@ -218,6 +244,11 @@ RERANKER_FAILURE_POLICY: str = _env_choice(
     "RERANKER_FAILURE_POLICY",
     ACTIVE_RETRIEVAL_PROFILE.reranker_failure_policy,
     frozenset({"fail_closed", "conservative", "fusion_order"}),
+)
+RERANKER_SECONDARY_POLICY: str = _env_choice(
+    "RERANKER_SECONDARY_POLICY",
+    ACTIVE_RETRIEVAL_PROFILE.secondary_policy,
+    frozenset({"all_supported", "emergency_low_risk_only"}),
 )
 
 # Smaller secondary reranker. The immutable revision is the reviewed

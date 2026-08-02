@@ -37,8 +37,10 @@ from src.config import (
     RERANKER_MIN_SCORE,
     RERANKER_MODEL,
     RERANKER_MODEL_REVISION,
+    RERANKER_SECONDARY_POLICY,
     RERANKER_TIMEOUT_SECONDS,
 )
+from src.guardrails.answer import is_high_risk_query, is_multi_section_query
 from src.retrievers.base import Retriever, ScoredChunk
 
 logger = logging.getLogger(__name__)
@@ -590,6 +592,7 @@ class RerankingRetriever:
             float | None
         ) = RERANKER_FALLBACK_MIN_SCORE,
         failure_policy: str = RERANKER_FAILURE_POLICY,
+        secondary_policy: str = RERANKER_SECONDARY_POLICY,
         conservative_gate: (
             Callable[[str, ScoredChunk], bool] | None
         ) = None,
@@ -599,6 +602,14 @@ class RerankingRetriever:
                 "failure_policy must be fail_closed, conservative, or "
                 "fusion_order."
             )
+        if secondary_policy not in {
+            "all_supported",
+            "emergency_low_risk_only",
+        }:
+            raise ValueError(
+                "secondary_policy must be all_supported or "
+                "emergency_low_risk_only."
+            )
         self._base = base
         self._reranker = reranker
         self.SOURCE = str(getattr(base, "SOURCE", "reranked"))
@@ -606,11 +617,13 @@ class RerankingRetriever:
         self._min_reranker_score = min_reranker_score
         self._secondary_min_reranker_score = secondary_min_reranker_score
         self._failure_policy = failure_policy
+        self._secondary_policy = secondary_policy
         self._conservative_gate = conservative_gate
         self._terminal_reranker_failure_count = 0
         self._fail_closed_count = 0
         self._fusion_fallback_count = 0
         self._answerability_rejection_count = 0
+        self._secondary_policy_rejection_count = 0
         self._last_terminal_reason_code = ""
         self._logged_failure_keys: set[tuple[str, str]] = set()
         self._metrics_lock = threading.Lock()
@@ -681,6 +694,12 @@ class RerankingRetriever:
         with self._metrics_lock:
             return self._answerability_rejection_count
 
+    @property
+    def secondary_policy_rejection_count(self) -> int:
+        """Count Secondary results rejected by the reviewed quality boundary."""
+        with self._metrics_lock:
+            return self._secondary_policy_rejection_count
+
     def warmup(self) -> None:
         """Load an optional local backend before measuring query latency."""
         warmup = getattr(self._reranker, "warmup", None)
@@ -705,6 +724,19 @@ class RerankingRetriever:
         with self._metrics_lock:
             self._answerability_rejection_count += len(reranked) - len(accepted)
         return accepted
+
+    def _secondary_is_allowed(self, query: str) -> bool:
+        """Apply the A6 quality boundary before Secondary evidence is exposed."""
+        if self._secondary_policy == "all_supported":
+            return True
+        allowed = not (
+            is_high_risk_query(query) or is_multi_section_query(query)
+        )
+        if not allowed:
+            with self._metrics_lock:
+                self._secondary_policy_rejection_count += 1
+                self._fail_closed_count += 1
+        return allowed
 
     def _handle_terminal_failure(
         self,
@@ -760,6 +792,12 @@ class RerankingRetriever:
             return []
         try:
             reranked = self._reranker.rerank(query, candidates, top_k)[:top_k]
+            if (
+                getattr(self._reranker, "active_reranker_role", "")
+                == "secondary"
+                and not self._secondary_is_allowed(query)
+            ):
+                return []
             return self._apply_answerability_gate(reranked)
         except Exception as exc:
             return self._handle_terminal_failure(

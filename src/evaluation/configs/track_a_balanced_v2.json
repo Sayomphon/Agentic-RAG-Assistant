@@ -1,0 +1,42 @@
+{
+  "schema_version": "track-a-runtime-profile-v2",
+  "profile_id": "track_a_balanced_v2",
+  "search_mode": "hybrid",
+  "candidate_k": 10,
+  "top_k": 6,
+  "hybrid_min_cosine": 0.2,
+  "reranker_enabled": true,
+  "reranker_model": "BAAI/bge-reranker-v2-m3",
+  "reranker_model_revision": "b4019bcd5cae485c342f61fe5889c2c800c5abec",
+  "reranker_min_score": 0.01,
+  "reranker_batch_size": 4,
+  "reranker_max_length": 128,
+  "reranker_timeout_seconds": 10.0,
+  "reranker_failure_policy": "fail_closed",
+  "secondary_enabled": true,
+  "secondary_model": "BAAI/bge-reranker-base",
+  "secondary_model_revision": "2cfc18c9415c912f9d8155881c133215df768a70",
+  "secondary_min_score": 0.01,
+  "secondary_policy": "emergency_low_risk_only",
+  "max_context_chars": 6000,
+  "performance_policy": {
+    "warm_retrieval_p95_ms": 3000,
+    "primary_local_reranker_p95_ms": 2000,
+    "peak_rss_mb": 6144,
+    "unexpected_healthy_fallback_count": 0,
+    "failure_path_unhandled_exception_count": 0
+  },
+  "failure_policy": {
+    "primary_failure": "try_secondary_once",
+    "secondary_high_risk_or_multi_section": "fail_closed",
+    "both_rerankers_fail": "fail_closed"
+  },
+  "selection_evidence": {
+    "stage": "m1_remediation_candidate",
+    "summary_path": "docs/TRACK_A_M1_REMEDIATION_EVIDENCE_V1.md",
+    "dataset_id": "lean-quality-v1",
+    "case_count": 40,
+    "top_k": 6,
+    "requires_r3_v3_before_approval": true
+  }
+}
