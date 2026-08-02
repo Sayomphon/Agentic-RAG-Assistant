@@ -45,9 +45,8 @@ from src.evaluation.baseline_support import (
     run_local_checks,
 )
 from src.evaluation.phase0 import (
-    PHASE0_BASELINE_ID,
-    PHASE0_RESULTS_JSON_PATH,
-    PHASE0_RESULTS_MARKDOWN_PATH,
+    PHASE0_V1_SPEC,
+    Phase0BaselineSpec,
     verify_phase0_manifest,
     write_phase0_manifest,
 )
@@ -403,13 +402,21 @@ def _build_report(
     )
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(
+    argv: Sequence[str] | None = None,
+    *,
+    spec: Phase0BaselineSpec = PHASE0_V1_SPEC,
+) -> int:
     """Initialize or execute the fail-closed Phase 0 baseline."""
     args = _parse_args(argv)
     cases: list[BaselineCase] = load_baseline_cases()
 
     if args.initialize_manifest:
-        manifest = write_phase0_manifest(cases)
+        manifest = write_phase0_manifest(
+            cases,
+            path=spec.manifest_path,
+            spec=spec,
+        )
         print(
             f"Initialized {manifest['baseline_id']} manifest. "
             "Review and version it before relying on the baseline."
@@ -417,14 +424,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     if args.verify_manifest_only:
-        manifest = verify_phase0_manifest(cases)
+        manifest = verify_phase0_manifest(
+            cases,
+            path=spec.manifest_path,
+            spec=spec,
+        )
         print(
             f"{manifest['baseline_id']} exactly matches the current "
             "source, dataset, corpus, contract, and runtime config."
         )
         return 0
 
-    manifest = verify_phase0_manifest(cases)
+    manifest = verify_phase0_manifest(
+        cases,
+        path=spec.manifest_path,
+        spec=spec,
+    )
     checks = [*run_local_checks(), run_contract_check()]
 
     external_modes = set(args.modes) & {"semantic", "hybrid"}
@@ -458,8 +473,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     generated_at = datetime.now().astimezone().isoformat(timespec="seconds")
     environment = environment_snapshot()
     payload = {
-        "schema_version": "enterprise-phase0-baseline-report-v1",
-        "baseline_id": PHASE0_BASELINE_ID,
+        "schema_version": spec.report_schema_version,
+        "baseline_id": spec.baseline_id,
         "generated_at": generated_at,
         "manifest": manifest,
         "environment": environment,
@@ -493,11 +508,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             }
         ),
     }
-    PHASE0_RESULTS_JSON_PATH.write_text(
+    spec.results_json_path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    PHASE0_RESULTS_MARKDOWN_PATH.write_text(
+    spec.results_markdown_path.write_text(
         _build_report(
             generated_at=generated_at,
             manifest=manifest,
@@ -513,8 +528,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
 
     print(retrieval_summary_table(metrics_by_mode))
-    print(f"\nWritten to {PHASE0_RESULTS_MARKDOWN_PATH.name}")
-    print(f"Written to {PHASE0_RESULTS_JSON_PATH.name}")
+    print(f"\nWritten to {spec.results_markdown_path.name}")
+    print(f"Written to {spec.results_json_path.name}")
     if answer_evaluation is not None and not answer_evaluation.passed:
         print(
             "Answer-level quality gates did not pass; the measured result "

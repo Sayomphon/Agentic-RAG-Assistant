@@ -14,7 +14,9 @@ from src.evaluation.run_track_a_closure import _parse_args
 from src.evaluation.track_a_closure import (
     TRACK_A_CLOSURE_ID,
     TRACK_A_CLOSURE_MANIFEST_PATH,
+    build_track_a_r4_assessment,
     load_track_a_closure_manifest,
+    render_track_a_closure_report,
     validate_track_a_closure_manifest,
     verify_track_a_r0_freeze,
     verify_track_a_r0_repository_state,
@@ -138,6 +140,68 @@ class TrackAClosureCommandTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "clean worktree"):
             verify_track_a_r0_repository_state(manifest)
+
+
+class TrackAR4AssessmentTests(unittest.TestCase):
+    def test_current_evidence_fails_closed_without_approval(self) -> None:
+        assessment = build_track_a_r4_assessment(
+            generated_at="2026-08-02T00:00:00+07:00"
+        )
+        gates = {
+            gate["name"]: gate["passed"]
+            for gate in assessment["gates"]
+        }
+
+        self.assertEqual(assessment["status"], "NOT_APPROVED")
+        self.assertFalse(assessment["parent_plan_update_eligible"])
+        self.assertFalse(gates["R3 final-answer quality"])
+        self.assertFalse(gates["R3 performance"])
+        self.assertFalse(gates["Human/Domain review"])
+        self.assertFalse(gates["Product/Business approval"])
+        self.assertEqual(
+            assessment["next_track"],
+            "Additional Track A remediation",
+        )
+
+    def test_report_is_aggregate_only_and_records_blockers(self) -> None:
+        assessment = build_track_a_r4_assessment(
+            generated_at="2026-08-02T00:00:00+07:00"
+        )
+
+        report = render_track_a_closure_report(assessment)
+
+        self.assertIn("Track A Status: `NOT_APPROVED`", report)
+        self.assertIn("Answer citation coverage", report)
+        self.assertIn("Parent Plan completion status was not updated", report)
+        self.assertNotIn("mixed_expense_approval", report)
+        self.assertNotIn("en_remote_work_days", report)
+
+    def test_identity_mismatch_fails_before_decision(self) -> None:
+        source = Path("track_a_answer_results_v2.json")
+        payload = json.loads(source.read_text(encoding="utf-8"))
+        payload["identity"]["corpus"]["sha256"] = "0" * 64
+
+        with tempfile.TemporaryDirectory() as directory:
+            tampered = Path(directory) / "answer.json"
+            tampered.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            with patch.dict(
+                "src.evaluation.track_a_closure._R4_JSON_EVIDENCE",
+                {"R3 answer evaluation": tampered},
+            ):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "identities differ",
+                ):
+                    build_track_a_r4_assessment()
+
+    def test_cli_accepts_r4_report_action_without_external_flags(self) -> None:
+        args = _parse_args(["--write-r4-report"])
+
+        self.assertTrue(args.write_r4_report)
+        self.assertFalse(args.allow_query_embeddings)
 
 
 if __name__ == "__main__":
