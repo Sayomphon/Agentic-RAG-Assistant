@@ -1,0 +1,16 @@
+{
+  "schema_version": "track-a-runtime-profile-v1",
+  "profile_id": "track_a_balanced_v1",
+  "search_mode": "hybrid",
+  "candidate_k": 12,
+  "top_k": 6,
+  "hybrid_min_cosine": 0.2,
+  "reranker_enabled": true,
+  "reranker_min_score": 0.01,
+  "reranker_batch_size": 4,
+  "reranker_timeout_seconds": 10.0,
+  "reranker_failure_policy": "fail_closed",
+  "secondary_enabled": true,
+  "secondary_min_score": 0.01,
+  "max_context_chars": 6000
+}

@@ -40,6 +40,10 @@ Rules:
 - If the snippets do not contain the information needed to answer the
   query, reply with exactly this sentence and nothing else — no
   citation: "{NOT_FOUND_SENTENCE}"
+- For grounded answers, match the user's language. A Thai question must
+  receive a Thai answer while preserving section-title citations exactly
+  as they appear in the snippet headers. The deterministic not-found
+  sentence remains unchanged in every language.
 - Snippets that merely relate to the query's topic do not count as an
   answer. If the user asks for specific data or a specific fact and the
   snippets only describe rules or processes about that topic without

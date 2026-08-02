@@ -194,7 +194,7 @@ not-found behaviour. Thai-only queries still use the Retriever Agent's English
 translation for the current English-only handbook, while BM25 itself safely
 tokenizes Thai and mixed-script corpora with PyThaiNLP.
 
-### Track A — Step 3 measure and tune
+### Historical Track A — Step 3 measure and tune
 
 Step 3 reads the frozen Step 1 artifact rather than overwriting it, embeds the
 40 versioned evaluation queries once, scores candidate evidence with the pinned
@@ -242,13 +242,63 @@ The reranker still adds material quality. The remaining negative errors are
 semantically plausible but absent facts, so a single score threshold cannot
 safely reach 90% not-found discipline without losing labelled answers. Treat
 that as the next answerability-classification improvement, not as a reason to
-hide the measured trade-off. The 10-second reranker timeout remains above the
-balanced profile's measured local p95 so normal CPU/MPS variance does not
-silently degrade it to fusion order.
+hide the measured trade-off. These are historical Step 3 v1 figures. The R3
+closure remeasurement below supersedes the old latency assumption: current
+Primary p95 exceeds both the 2-second local target and the 3-second retrieval
+target.
 
 The complete evidence, selected profile, category breakdown, latency, and
 security boundary are in
 [`track_a_step3_results.md`](track_a_step3_results.md).
+
+### Track A closure — R3 measurement decision
+
+R3 adds causal A0–A7 ablation, all-40-case end-to-end answer evaluation, and
+ten isolated cold/warm/failure performance scenarios. Run the three evidence
+stages in order:
+
+```bash
+RERANKER_LOCAL_FILES_ONLY=true \
+  python -m src.evaluation.run_track_a_ablation
+
+python -m src.evaluation.run_track_a_answer_eval \
+  --allow-answer-evaluation \
+  --allow-knowledge-snippets
+
+RERANKER_LOCAL_FILES_ONLY=true \
+  python -m src.evaluation.run_track_a_performance
+```
+
+The answer flags explicitly approve sending the frozen evaluation questions,
+retrieved handbook snippets, and generated responses to the configured OpenAI
+project. Credentials remain environment-only. Published artifacts contain no
+raw question, response, prompt, snippet, document body, credential, or raw
+provider error. The Human-review bundle is local, owner-readable only, and
+Git-ignored under `.cache`.
+
+Measured A5 retrieval passed: versus true Pre-Track-A Hybrid at the same
+`TOP_K=6`, Recall improved from 68.33% to 88.89%, MRR from 0.700 to 0.900,
+Not-found discipline from 10% to 80%, and Thai recall from 10% to 70%.
+Secondary was faster and smaller but failed the Multi-section non-regression
+gate; both-reranker failure closed safely.
+
+Answer metrics included 100% citation-title validity, 100% exact negative
+not-found, 99.25% faithfulness, 5.0/5 relevance, and 100% Thai-script
+appropriateness. The answer gate still failed: citation coverage was 91.01%,
+one answer returned not-found despite expected context, and one unsupported
+high-risk claim was judged. Primary Candidate 12 also missed performance
+targets (local p95 4.20 s; retrieval p95 4.73 s), although Peak RSS passed at
+about 2.16 GiB.
+
+Therefore the R3 recommendation is `REJECT_AND_RETUNE`; the versioned
+`track_a_balanced_v1` file remains the measured candidate identity, not an
+approved closure/production promotion. Evidence and required remediation are
+in:
+
+- [`track_a_ablation_results_v2.md`](track_a_ablation_results_v2.md)
+- [`track_a_answer_results_v2.md`](track_a_answer_results_v2.md)
+- [`track_a_performance_results_v2.md`](track_a_performance_results_v2.md)
+- [`docs/TRACK_A_DECISION_RECORD.md`](docs/TRACK_A_DECISION_RECORD.md)
 
 ### Track A — Step 1 mini baseline
 
