@@ -62,9 +62,15 @@ from src.retrievers.reranker import LocalCrossEncoderReranker
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BASELINE_PATH = PROJECT_ROOT / "baseline_results.json"
-RESULTS_JSON_PATH = PROJECT_ROOT / "track_a_step3_results.json"
-RESULTS_MARKDOWN_PATH = PROJECT_ROOT / "track_a_step3_results.md"
+RESULTS_JSON_PATH = PROJECT_ROOT / "track_a_ablation_results_v2.json"
+RESULTS_MARKDOWN_PATH = PROJECT_ROOT / "track_a_ablation_results_v2.md"
 PREPARED_CACHE_PATH = PROJECT_ROOT / ".cache" / "track-a-step3-prepared.json"
+_HISTORICAL_RESULT_PATHS = frozenset(
+    {
+        (PROJECT_ROOT / "track_a_step3_results.json").resolve(),
+        (PROJECT_ROOT / "track_a_step3_results.md").resolve(),
+    }
+)
 
 CANDIDATE_K_GRID = (12, 24, 30)
 TOP_K_GRID = (4, 6)
@@ -83,7 +89,7 @@ _EPSILON = 1e-12
 _SAFETY_TARGET = 0.90
 _BALANCED_QUALITY_RETENTION = 0.90
 _BASELINE_SCHEMA = "track-a-step1-baseline-v1"
-_RESULT_SCHEMA = "track-a-step3-measure-tune-v1"
+_RESULT_SCHEMA = "track-a-step3-measure-tune-v2"
 _PREPARED_CACHE_SCHEMA = "track-a-step3-prepared-v1"
 
 
@@ -157,7 +163,8 @@ class ProfileEvaluation:
     context_avg_chars: float
     context_p95_chars: float
     context_truncation_rate: float
-    citation_validity: float
+    context_header_validity: float
+    context_budget_validity: float
     average_final_hits: float
     cases: tuple[CaseResult, ...]
 
@@ -563,7 +570,7 @@ def prepare_cases(
 def _profile_results(
     profile: TuneProfile,
     prepared_cases: Sequence[PreparedCase],
-) -> tuple[list[CaseResult], list[int], list[int], list[int]]:
+) -> tuple[list[CaseResult], list[int], list[int], list[int], list[int]]:
     context_builder = ContextBuilder(
         max_context_chars=profile.max_context_chars,
         duplicate_threshold=CONTEXT_DUPLICATE_THRESHOLD,
@@ -571,7 +578,8 @@ def _profile_results(
     )
     results: list[CaseResult] = []
     context_sizes: list[int] = []
-    citation_checks: list[int] = []
+    header_checks: list[int] = []
+    budget_checks: list[int] = []
     truncation_checks: list[int] = []
 
     for prepared in prepared_cases:
@@ -599,7 +607,8 @@ def _profile_results(
             for hit, snippet in zip(context.hits, context.snippets, strict=True)
         )
         budget_valid = context.total_chars <= profile.max_context_chars
-        citation_checks.append(int(snippets_valid and budget_valid))
+        header_checks.append(int(snippets_valid))
+        budget_checks.append(int(budget_valid))
         original_text_by_index = {
             hit.chunk.index: hit.text for hit in hits
         }
@@ -621,7 +630,13 @@ def _profile_results(
                 latency_ms=0.0,
             )
         )
-    return results, context_sizes, citation_checks, truncation_checks
+    return (
+        results,
+        context_sizes,
+        header_checks,
+        budget_checks,
+        truncation_checks,
+    )
 
 
 def _gate_failures(
@@ -630,7 +645,8 @@ def _gate_failures(
     baseline_metrics: Mapping[str, float],
     baseline_categories: Mapping[str, Mapping[str, float]],
     *,
-    citation_validity: float,
+    context_header_validity: float,
+    context_budget_validity: float,
 ) -> tuple[str, ...]:
     failures: list[str] = []
     for metric in ("recall_at_k", "mrr", "not_found_discipline"):
@@ -647,8 +663,10 @@ def _gate_failures(
         <= baseline_categories["thai_answerable"]["recall"] + _EPSILON
     ):
         failures.append("thai_recall_not_improved")
-    if citation_validity < 1.0:
-        failures.append("citation_validity_below_100_percent")
+    if context_header_validity < 1.0:
+        failures.append("context_header_validity_below_100_percent")
+    if context_budget_validity < 1.0:
+        failures.append("context_budget_validity_below_100_percent")
     return tuple(failures)
 
 
@@ -658,19 +676,24 @@ def evaluate_profile(
     baseline_metrics: Mapping[str, float],
     baseline_categories: Mapping[str, Mapping[str, float]],
 ) -> ProfileEvaluation:
-    results, context_sizes, citation_checks, truncation_checks = _profile_results(
-        profile,
-        prepared_cases,
-    )
+    (
+        results,
+        context_sizes,
+        header_checks,
+        budget_checks,
+        truncation_checks,
+    ) = _profile_results(profile, prepared_cases)
     metrics = _mode_metrics(results)
     categories = _category_metrics(results)
-    citation_validity = _mean(citation_checks)
+    context_header_validity = _mean(header_checks)
+    context_budget_validity = _mean(budget_checks)
     failures = _gate_failures(
         metrics,
         categories,
         baseline_metrics,
         baseline_categories,
-        citation_validity=citation_validity,
+        context_header_validity=context_header_validity,
+        context_budget_validity=context_budget_validity,
     )
     thai_recall = categories["thai_answerable"]["recall"]
     quality_score = (
@@ -692,7 +715,8 @@ def evaluate_profile(
         context_avg_chars=_mean(context_sizes),
         context_p95_chars=_percentile(context_sizes, 0.95),
         context_truncation_rate=_mean(truncation_checks),
-        citation_validity=citation_validity,
+        context_header_validity=context_header_validity,
+        context_budget_validity=context_budget_validity,
         average_final_hits=_mean(len(result.retrieved) for result in results),
         cases=tuple(results),
     )
@@ -863,7 +887,13 @@ def _profile_payload(
         "context_avg_chars": result.context_avg_chars,
         "context_p95_chars": result.context_p95_chars,
         "context_truncation_rate": result.context_truncation_rate,
-        "citation_validity": result.citation_validity,
+        "context_header_validity": result.context_header_validity,
+        "context_budget_validity": result.context_budget_validity,
+        # Retrieval/context tuning does not generate answers. Keeping these
+        # fields explicit and null prevents context headers from being
+        # misreported as final-answer citation evidence.
+        "answer_citation_validity": None,
+        "answer_citation_coverage": None,
         "average_final_hits": result.average_final_hits,
     }
     if include_cases:
@@ -1046,7 +1076,12 @@ def _build_report(
             f"- `RERANKER_BATCH_SIZE={RERANKER_BATCH_SIZE}`",
             f"- `RERANKER_TIMEOUT_SECONDS={RERANKER_TIMEOUT_SECONDS:g}`",
             f"- `MAX_CONTEXT_CHARS={profile.max_context_chars}`",
-            f"- Citation validity: {_percent(selected.citation_validity)}",
+            f"- Context header validity: "
+            f"{_percent(selected.context_header_validity)}",
+            f"- Context budget validity: "
+            f"{_percent(selected.context_budget_validity)}",
+            "- Answer citation validity/coverage: not measured by this "
+            "retrieval-only runner.",
             f"- Context truncation rate: "
             f"{_percent(selected.context_truncation_rate)}",
             f"- Thai recall: "
@@ -1124,8 +1159,25 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def _validate_output_paths(json_path: Path, markdown_path: Path) -> None:
+    """Protect historical and already-versioned evidence from overwrite."""
+    outputs = (json_path.resolve(), markdown_path.resolve())
+    if len(set(outputs)) != len(outputs):
+        raise ValueError("JSON and Markdown outputs must use different paths.")
+    for output in outputs:
+        if output in _HISTORICAL_RESULT_PATHS:
+            raise ValueError(
+                f"Refusing to overwrite historical Track A evidence: {output.name}."
+            )
+        if output.exists():
+            raise FileExistsError(
+                f"Refusing to overwrite versioned evidence: {output}."
+            )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(argv)
+    _validate_output_paths(args.output_json, args.output_markdown)
     if not args.allow_query_embeddings:
         raise SystemExit(
             "Refusing external embedding requests without "

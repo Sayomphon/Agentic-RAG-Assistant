@@ -104,8 +104,18 @@ pip install -r requirements.txt
 cp .env.example .env                                  # then put your OPENAI_API_KEY in .env
 ```
 
-The retrieval mode is `SEARCH_MODE` in `.env` (default `keyword`); set it to
-`semantic` or `hybrid` to use embeddings. **CLI** — single query or interactive:
+Runtime code defaults to the offline-safe `keyword_safe` retrieval profile.
+Copying `.env.example` explicitly activates
+`RETRIEVAL_PROFILE=track_a_balanced_v1`, whose mode is `hybrid`. Individual
+environment variables override the named profile; a trusted per-request UI
+`search_mode`/`top_k` override has highest priority:
+
+```text
+trusted request override > explicit env var > named profile > code fallback
+```
+
+Set `SEARCH_MODE=keyword|semantic|hybrid` only when an individual override is
+required. **CLI** — single query or interactive:
 
 ```bash
 python main.py "What is the policy on international travel?"
@@ -146,24 +156,37 @@ the other measures which direction is forward.
 
 ### Track A — Step 2 quality path
 
-Hybrid mode now retrieves `CANDIDATE_K` candidates from each retrieval side,
-fuses them, reranks the combined pool locally with the pinned multilingual
-`BAAI/bge-reranker-v2-m3` revision, and hands only `TOP_K` diverse,
-budget-bounded snippets to the generator. The model loads on the first hybrid
-query; remote model code is disabled, inference is serialized to bound RAM,
-weights are cached under `.cache/reranker`, and timeout/load/inference
-failures preserve the original fusion order.
+Hybrid mode retrieves `CANDIDATE_K` candidates from each retrieval side,
+fuses them, and reranks the combined pool locally with the pinned multilingual
+`BAAI/bge-reranker-v2-m3` revision. If the primary model cannot load, times
+out, is busy, exhausts memory, or returns invalid scores, the runtime tries the
+independently pinned `BAAI/bge-reranker-base` secondary model. If both models
+fail, the production-default `RERANKER_FAILURE_POLICY=fail_closed` returns no
+evidence, so the generator produces its deterministic not-found response.
+`fusion_order` is an explicit lab/debug policy only; `conservative` also
+fails closed unless a reviewed deterministic gate is installed.
+
+Both models load lazily, remote model code is disabled
+(`trust_remote_code=False`), inference is serialized to bound RAM, and weights
+are stored in separate `.cache/reranker` and `.cache/reranker-fallback`
+directories. Telemetry records only stable reason codes and model identifiers;
+raw queries, candidate bodies, and raw exception details are never logged.
+The smaller secondary model is MIT-licensed, uses unbounded relevance logits,
+and therefore has its own `RERANKER_FALLBACK_MIN_SCORE` rather than silently
+reusing the primary threshold.
 
 Before serving hybrid traffic in a fresh environment, prefetch and validate
-the pinned local snapshot without sending any knowledge-base content:
+both pinned snapshots without sending any knowledge-base content:
 
 ```bash
 python -m src.retrievers.reranker
 ```
 
 The Step 3 measurement below set `RERANKER_MIN_SCORE=0.01`; candidates below
-the threshold are rejected before generation. Set it to `off` only for an
-explicit fallback experiment. Semantic-only mode keeps the conservative
+the threshold are rejected before generation. The secondary threshold is
+configured separately because model score scales are not interchangeable.
+Set either threshold to `off` only for an explicit lab experiment.
+Semantic-only mode keeps the conservative
 `MIN_COSINE=0.38`, while hybrid mode uses the separately measured
 `HYBRID_MIN_COSINE=0.20` behind the reranker gate. This separation prevents a
 Thai-recall improvement in hybrid mode from silently weakening semantic-only
@@ -171,7 +194,7 @@ not-found behaviour. Thai-only queries still use the Retriever Agent's English
 translation for the current English-only handbook, while BM25 itself safely
 tokenizes Thai and mixed-script corpora with PyThaiNLP.
 
-### Track A — Step 3 measure and tune
+### Historical Track A — Step 3 measure and tune
 
 Step 3 reads the frozen Step 1 artifact rather than overwriting it, embeds the
 40 versioned evaluation queries once, scores candidate evidence with the pinned
@@ -185,7 +208,8 @@ python -m src.evaluation.run_measure_tune --allow-query-embeddings
 Only evaluation query strings go to the Embeddings endpoint. Knowledge-base
 bodies, snippets, prompts, API keys, and raw environment values are excluded.
 Sanitized scores are cached locally so a report or decision-gate retry makes
-zero additional API requests. The selected configuration is:
+zero additional API requests. The selected configuration is the authoritative
+`track_a_balanced_v1` profile:
 
 ```text
 CANDIDATE_K=12
@@ -195,13 +219,20 @@ RERANKER_MIN_SCORE=0.01
 RERANKER_BATCH_SIZE=4
 RERANKER_TIMEOUT_SECONDS=10
 MAX_CONTEXT_CHARS=6000
+RERANKER_FAILURE_POLICY=fail_closed
 ```
+
+The historical Step 3 v1 report called its context-header check
+`citation_validity`. New evaluation output uses schema v2 and separates
+`context_header_validity`, `context_budget_validity`,
+`answer_citation_validity`, and `answer_citation_coverage`; the answer fields
+remain null in retrieval-only runs.
 
 Against the same 40 cases, the balanced runtime profile improved recall from
 63.9% to 88.9%, MRR from 0.650 to 0.900, Thai recall from 0% to 70%, and
-not-found discipline from 30% to 80%; citation validity remained 100% and the
-selected context budget caused no truncation. It retains about 92.6% of the
-quality-max composite score while cutting the reranker pool from 30 to 12;
+not-found discipline from 30% to 80%; context-header validity remained 100%
+and the selected context budget caused no truncation. It retains about 92.6%
+of the quality-max composite score while cutting the reranker pool from 30 to 12;
 measured retrieval p95 was about 2.4 seconds on the Apple M4/16 GB environment.
 The optional quality-max profile (`CANDIDATE_K=30`) reached 95.6% recall and
 90% Thai recall but showed unacceptable tail latency (up to roughly 18.5
@@ -211,13 +242,118 @@ The reranker still adds material quality. The remaining negative errors are
 semantically plausible but absent facts, so a single score threshold cannot
 safely reach 90% not-found discipline without losing labelled answers. Treat
 that as the next answerability-classification improvement, not as a reason to
-hide the measured trade-off. The 10-second reranker timeout remains above the
-balanced profile's measured local p95 so normal CPU/MPS variance does not
-silently degrade it to fusion order.
+hide the measured trade-off. These are historical Step 3 v1 figures. The R3
+closure remeasurement below supersedes the old latency assumption: current
+Primary p95 exceeds both the 2-second local target and the 3-second retrieval
+target.
 
 The complete evidence, selected profile, category breakdown, latency, and
 security boundary are in
 [`track_a_step3_results.md`](track_a_step3_results.md).
+
+### Track A closure — R3 measurement decision
+
+R3 adds causal A0–A7 ablation, all-40-case end-to-end answer evaluation, and
+ten isolated cold/warm/failure performance scenarios. Run the three evidence
+stages in order:
+
+```bash
+RERANKER_LOCAL_FILES_ONLY=true \
+  python -m src.evaluation.run_track_a_ablation
+
+python -m src.evaluation.run_track_a_answer_eval \
+  --allow-answer-evaluation \
+  --allow-knowledge-snippets
+
+RERANKER_LOCAL_FILES_ONLY=true \
+  python -m src.evaluation.run_track_a_performance
+```
+
+The answer flags explicitly approve sending the frozen evaluation questions,
+retrieved handbook snippets, and generated responses to the configured OpenAI
+project. Credentials remain environment-only. Published artifacts contain no
+raw question, response, prompt, snippet, document body, credential, or raw
+provider error. The Human-review bundle is local, owner-readable only, and
+Git-ignored under `.cache`.
+
+Measured A5 retrieval passed: versus true Pre-Track-A Hybrid at the same
+`TOP_K=6`, Recall improved from 68.33% to 88.89%, MRR from 0.700 to 0.900,
+Not-found discipline from 10% to 80%, and Thai recall from 10% to 70%.
+Secondary was faster and smaller but failed the Multi-section non-regression
+gate; both-reranker failure closed safely.
+
+Answer metrics included 100% citation-title validity, 100% exact negative
+not-found, 99.25% faithfulness, 5.0/5 relevance, and 100% Thai-script
+appropriateness. The answer gate still failed: citation coverage was 91.01%,
+one answer returned not-found despite expected context, and one unsupported
+high-risk claim was judged. Primary Candidate 12 also missed performance
+targets (local p95 4.20 s; retrieval p95 4.73 s), although Peak RSS passed at
+about 2.16 GiB.
+
+Therefore the R3 recommendation is `REJECT_AND_RETUNE`; the versioned
+`track_a_balanced_v1` file remains the measured candidate identity, not an
+approved closure/production promotion. Evidence and required remediation are
+in:
+
+- [`track_a_ablation_results_v2.md`](track_a_ablation_results_v2.md)
+- [`track_a_answer_results_v2.md`](track_a_answer_results_v2.md)
+- [`track_a_performance_results_v2.md`](track_a_performance_results_v2.md)
+- [`docs/TRACK_A_DECISION_RECORD.md`](docs/TRACK_A_DECISION_RECORD.md)
+
+### Track A closure — R4 final checkpoint
+
+R4 validates the R0–R3 evidence bundle, verifies that every historical
+artifact still matches its frozen identity, and computes closure from
+machine-readable gates rather than treating the Decision Record prose as an
+approval. Generate the sanitized aggregate report locally:
+
+```bash
+venv/bin/python -m src.evaluation.run_track_a_closure --write-r4-report
+```
+
+The resulting
+[`track_a_closure_report_v2.md`](track_a_closure_report_v2.md) records
+`Track A Status: NOT_APPROVED`. Retrieval and runtime-safety gates passed, but
+final-answer quality, performance, Human/Domain review, Product/Business
+approval, and R3 authorization remain blocking. The Parent Plan is therefore
+not marked complete, `track_a_balanced_v1` remains a measured candidate rather
+than a production promotion, and Enterprise Phase 1 is not authorized.
+
+Enterprise Phase 0 v2 is still frozen as a post-remediation technical
+checkpoint. It adds the named retrieval profile, fail-closed policy, and
+immutable Primary/Secondary reranker identities without overwriting the
+historical v1 manifest or reports:
+
+```bash
+RETRIEVAL_PROFILE=track_a_balanced_v1 \
+SEARCH_MODE=hybrid \
+RERANKER_LOCAL_FILES_ONLY=true \
+  venv/bin/python -m src.evaluation.run_phase0_v2 \
+    --verify-manifest-only
+
+RETRIEVAL_PROFILE=track_a_balanced_v1 \
+SEARCH_MODE=hybrid \
+RERANKER_LOCAL_FILES_ONLY=true \
+  venv/bin/python -m src.evaluation.run_phase0_v2 \
+    --modes keyword semantic hybrid \
+    --allow-query-embeddings
+```
+
+The second command requires explicit approval to send only the 40 evaluation
+queries to OpenAI Embeddings. It requires the verified local corpus cache and
+does not approve corpus embeddings or answer evaluation. The accepted v2 run
+recorded:
+
+- Keyword: Recall@6 63.89%, MRR 0.650, Not-found 30%, p95 0.6 ms
+- Semantic: Recall@6 68.33%, MRR 0.667, Not-found 50%, p95 683.9 ms
+- Hybrid + Primary reranker: Recall@6 88.89%, MRR 0.900, Not-found 80%,
+  p95 1,498.7 ms
+- Healthy-run provider failures, Primary failures, Secondary uses,
+  fail-closed events, and fusion fallbacks: all zero
+
+The versioned outputs are
+[`phase0_v2_baseline_results.md`](phase0_v2_baseline_results.md) and
+[`src/evaluation/datasets/enterprise_phase0_v2.manifest.json`](src/evaluation/datasets/enterprise_phase0_v2.manifest.json).
 
 ### Track A — Step 1 mini baseline
 
@@ -249,9 +385,37 @@ retrieval settings; API keys, raw environment variables, prompts, and document
 bodies are excluded. Any embedding-provider failure aborts the run rather than
 misreporting a fallback result as semantic quality.
 
-### Enterprise Track — Phase 0 baseline and contract freeze
+### Track A closure — R1 comparative baseline
 
-Phase 0 freezes the post-Track-A system before Qdrant or ACL work begins. It
+R1 reconstructs the historical runtime at commit `5e8537b` in a detached
+worktree and evaluates Keyword, Semantic, and Hybrid retrieval at both the
+historical default `TOP_K=4` and the controlled `TOP_K=6`. The resulting
+[`track_a_pre_upgrade_baseline_v2.md`](track_a_pre_upgrade_baseline_v2.md)
+compares those profiles with the frozen post-Track-A Phase 0 evidence without
+modifying any historical artifact.
+
+After creating a separate virtual environment inside the detached worktree,
+run the official comparison from a clean remediation branch:
+
+```bash
+venv/bin/python -m src.evaluation.run_track_a_closure \
+  --run-r1 \
+  --legacy-worktree <detached-worktree> \
+  --legacy-python <detached-worktree>/venv/bin/python \
+  --allow-query-embeddings
+```
+
+The explicit approval permits only the 40 evaluation queries to reach the
+configured OpenAI Embeddings project. R1 requires the existing
+content-addressed corpus cache and refuses to rebuild corpus embeddings. The
+runner also rejects dirty worktrees, mismatched commits or hashes, provider
+failures, fallbacks, duplicate JSON keys, raw queries, document bodies,
+prompts, credentials, and attempts to overwrite the v2 artifact.
+
+### Enterprise Track — historical Phase 0 v1 baseline and contract freeze
+
+Historical Phase 0 v1 froze the pre-remediation post-Track-A system before
+Qdrant or ACL work began. It
 reuses the 40 reviewed Thai/English/mixed/negative/multi-section cases, but
 creates an independent Enterprise manifest that fingerprints the corpus,
 source and tests, dependency/config templates, complete non-secret runtime

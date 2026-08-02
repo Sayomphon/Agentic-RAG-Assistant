@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import re
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Mapping, Sequence, cast
@@ -31,8 +32,15 @@ from src.config import (
     MIN_RELATIVE_SCORE,
     MIN_SCORE,
     MODEL_NAME,
+    RETRIEVAL_PROFILE,
     RERANKER_BATCH_SIZE,
     RERANKER_ENABLED,
+    RERANKER_FAILURE_POLICY,
+    RERANKER_FALLBACK_ENABLED,
+    RERANKER_FALLBACK_MAX_LENGTH,
+    RERANKER_FALLBACK_MIN_SCORE,
+    RERANKER_FALLBACK_MODEL,
+    RERANKER_FALLBACK_MODEL_REVISION,
     RERANKER_LOCAL_FILES_ONLY,
     RERANKER_MAX_CANDIDATES,
     RERANKER_MAX_LENGTH,
@@ -41,6 +49,7 @@ from src.config import (
     RERANKER_MODEL_REVISION,
     RERANKER_TIMEOUT_SECONDS,
     RRF_K,
+    SEARCH_MODE,
     TEMPERATURE,
     THAI_TOKENIZER_ENABLED,
     TITLE_BOOST,
@@ -59,6 +68,21 @@ from src.evaluation.baseline_support import (
 )
 from src.retrievers.base import RETRIEVER_CONTRACT_VERSION, load_chunks
 
+
+@dataclass(frozen=True)
+class Phase0BaselineSpec:
+    """Immutable file and schema identities for one Phase 0 generation."""
+
+    baseline_id: str
+    manifest_schema_version: str
+    report_schema_version: str
+    created_at: str
+    manifest_path: Path
+    results_json_path: Path
+    results_markdown_path: Path
+    include_remediation_config: bool = False
+
+
 PHASE0_BASELINE_ID = "enterprise-phase0-v1"
 PHASE0_SCHEMA_VERSION = "enterprise-phase0-manifest-v1"
 PHASE0_MANIFEST_PATH = (
@@ -68,6 +92,29 @@ PHASE0_MANIFEST_PATH = (
 )
 PHASE0_RESULTS_JSON_PATH = PROJECT_ROOT / "phase0_baseline_results.json"
 PHASE0_RESULTS_MARKDOWN_PATH = PROJECT_ROOT / "phase0_baseline_results.md"
+PHASE0_V1_SPEC = Phase0BaselineSpec(
+    baseline_id=PHASE0_BASELINE_ID,
+    manifest_schema_version=PHASE0_SCHEMA_VERSION,
+    report_schema_version="enterprise-phase0-baseline-report-v1",
+    created_at="2026-07-28",
+    manifest_path=PHASE0_MANIFEST_PATH,
+    results_json_path=PHASE0_RESULTS_JSON_PATH,
+    results_markdown_path=PHASE0_RESULTS_MARKDOWN_PATH,
+)
+PHASE0_V2_SPEC = Phase0BaselineSpec(
+    baseline_id="enterprise-phase0-v2",
+    manifest_schema_version="enterprise-phase0-manifest-v2",
+    report_schema_version="enterprise-phase0-baseline-report-v2",
+    created_at="2026-08-02",
+    manifest_path=(
+        Path(__file__).resolve().parent
+        / "datasets"
+        / "enterprise_phase0_v2.manifest.json"
+    ),
+    results_json_path=PROJECT_ROOT / "phase0_v2_baseline_results.json",
+    results_markdown_path=PROJECT_ROOT / "phase0_v2_baseline_results.md",
+    include_remediation_config=True,
+)
 
 _SOURCE_FILES = (
     Path(".env.example"),
@@ -257,13 +304,15 @@ def _all_mapping_keys(value: object) -> set[str]:
 
 def validate_frozen_phase0_manifest(
     value: object,
+    *,
+    spec: Phase0BaselineSpec = PHASE0_V1_SPEC,
 ) -> dict[str, object]:
     """Validate historical artifact integrity without reading current sources."""
     manifest = _mapping(value, "manifest")
     _require_exact_fields(manifest, _TOP_LEVEL_FIELDS, "manifest")
-    if manifest["schema_version"] != PHASE0_SCHEMA_VERSION:
+    if manifest["schema_version"] != spec.manifest_schema_version:
         raise ValueError("manifest.schema_version is unsupported.")
-    if manifest["baseline_id"] != PHASE0_BASELINE_ID:
+    if manifest["baseline_id"] != spec.baseline_id:
         raise ValueError("manifest.baseline_id is unsupported.")
     try:
         date.fromisoformat(str(manifest["created_at"]))
@@ -376,6 +425,8 @@ def validate_frozen_phase0_manifest(
 
 def load_frozen_phase0_manifest(
     path: Path = PHASE0_MANIFEST_PATH,
+    *,
+    spec: Phase0BaselineSpec = PHASE0_V1_SPEC,
 ) -> dict[str, object]:
     """Load and structurally validate the historical manifest only."""
     if not path.is_file():
@@ -386,7 +437,7 @@ def load_frozen_phase0_manifest(
         path.read_text(encoding="utf-8"),
         object_pairs_hook=_reject_duplicate_json_keys,
     )
-    return validate_frozen_phase0_manifest(payload)
+    return validate_frozen_phase0_manifest(payload, spec=spec)
 
 
 def phase0_config_snapshot() -> dict[str, object]:
@@ -437,6 +488,30 @@ def phase0_config_snapshot() -> dict[str, object]:
     }
 
 
+def phase0_v2_config_snapshot() -> dict[str, object]:
+    """Freeze the post-remediation profile and both reranker safety paths."""
+    snapshot = phase0_config_snapshot()
+    serving = _mapping(snapshot["serving"], "runtime_config.serving")
+    reranker = _mapping(snapshot["reranker"], "runtime_config.reranker")
+    serving.update(
+        {
+            "retrieval_profile": RETRIEVAL_PROFILE,
+            "search_mode": SEARCH_MODE,
+        }
+    )
+    reranker.update(
+        {
+            "failure_policy": RERANKER_FAILURE_POLICY,
+            "fallback_enabled": RERANKER_FALLBACK_ENABLED,
+            "fallback_model": RERANKER_FALLBACK_MODEL,
+            "fallback_model_revision": RERANKER_FALLBACK_MODEL_REVISION,
+            "fallback_max_length": RERANKER_FALLBACK_MAX_LENGTH,
+            "fallback_min_score": RERANKER_FALLBACK_MIN_SCORE,
+        }
+    )
+    return snapshot
+
+
 def _phase0_source_files() -> list[Path]:
     """Return the auditable source set covered by the Phase 0 fingerprint."""
     dynamic_files = [
@@ -482,6 +557,8 @@ def source_tree_snapshot() -> dict[str, object]:
 
 def expected_phase0_manifest(
     cases: Sequence[BaselineCase],
+    *,
+    spec: Phase0BaselineSpec = PHASE0_V1_SPEC,
 ) -> dict[str, object]:
     """Build the exact immutable identity expected by the Phase 0 runner."""
     chunks = load_chunks()
@@ -497,9 +574,9 @@ def expected_phase0_manifest(
         )
 
     return {
-        "schema_version": PHASE0_SCHEMA_VERSION,
-        "baseline_id": PHASE0_BASELINE_ID,
-        "created_at": "2026-07-28",
+        "schema_version": spec.manifest_schema_version,
+        "baseline_id": spec.baseline_id,
+        "created_at": spec.created_at,
         "retriever_contract_version": RETRIEVER_CONTRACT_VERSION,
         "dataset": {
             "version": DATASET_VERSION,
@@ -511,7 +588,11 @@ def expected_phase0_manifest(
         },
         "corpus": corpus_snapshot(),
         "source_tree": source_tree_snapshot(),
-        "runtime_config": phase0_config_snapshot(),
+        "runtime_config": (
+            phase0_v2_config_snapshot()
+            if spec.include_remediation_config
+            else phase0_config_snapshot()
+        ),
         "evaluation_policy": {
             "default_modes": ["keyword"],
             "external_modes": ["semantic", "hybrid"],
@@ -528,6 +609,7 @@ def write_phase0_manifest(
     cases: Sequence[BaselineCase],
     *,
     path: Path = PHASE0_MANIFEST_PATH,
+    spec: Phase0BaselineSpec = PHASE0_V1_SPEC,
 ) -> dict[str, object]:
     """Create the manifest once; refuse to overwrite frozen evidence."""
     if path.exists():
@@ -535,8 +617,8 @@ def write_phase0_manifest(
             f"Phase 0 manifest already exists: {path}. "
             "Version a new baseline instead of overwriting it."
         )
-    payload = expected_phase0_manifest(cases)
-    validate_frozen_phase0_manifest(payload)
+    payload = expected_phase0_manifest(cases, spec=spec)
+    validate_frozen_phase0_manifest(payload, spec=spec)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary_path = path.with_suffix(f"{path.suffix}.tmp")
     try:
@@ -558,10 +640,11 @@ def verify_phase0_manifest(
     cases: Sequence[BaselineCase],
     *,
     path: Path = PHASE0_MANIFEST_PATH,
+    spec: Phase0BaselineSpec = PHASE0_V1_SPEC,
 ) -> dict[str, object]:
     """Fail closed when frozen code, data, corpus, or config has changed."""
-    recorded = load_frozen_phase0_manifest(path)
-    current = expected_phase0_manifest(cases)
+    recorded = load_frozen_phase0_manifest(path, spec=spec)
+    current = expected_phase0_manifest(cases, spec=spec)
     if recorded != current:
         raise ValueError(
             "Phase 0 manifest does not match the current source tree, dataset, "

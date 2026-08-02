@@ -48,6 +48,9 @@ class PipelineState(TypedDict):
     route: NotRequired[str]                  # router verdict: kb_query | direct
     search_attempts: NotRequired[list[str]]  # every query tried, in order
     rewritten_query: NotRequired[str]        # rewriter's query for the next attempt
+    answer_decision: NotRequired[str]         # ANSWER | SAFE_PARTIAL | NOT_FOUND
+    answer_repair_attempted: NotRequired[bool]
+    answer_guardrail_reason_codes: NotRequired[list[str]]
 
 
 def _after_routing(state: PipelineState) -> str:

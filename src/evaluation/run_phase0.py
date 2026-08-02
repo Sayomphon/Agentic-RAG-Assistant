@@ -45,9 +45,8 @@ from src.evaluation.baseline_support import (
     run_local_checks,
 )
 from src.evaluation.phase0 import (
-    PHASE0_BASELINE_ID,
-    PHASE0_RESULTS_JSON_PATH,
-    PHASE0_RESULTS_MARKDOWN_PATH,
+    PHASE0_V1_SPEC,
+    Phase0BaselineSpec,
     verify_phase0_manifest,
     write_phase0_manifest,
 )
@@ -208,6 +207,30 @@ def _runtime_health(retriever: Retriever) -> dict[str, object]:
         "reranker_fallback_count": int(
             getattr(retriever, "reranker_fallback_count", 0)
         ),
+        "primary_reranker_failure_count": int(
+            getattr(retriever, "primary_reranker_failure_count", 0)
+        ),
+        "secondary_reranker_usage_count": int(
+            getattr(retriever, "secondary_reranker_usage_count", 0)
+        ),
+        "secondary_reranker_failure_count": int(
+            getattr(retriever, "secondary_reranker_failure_count", 0)
+        ),
+        "secondary_policy_rejection_count": int(
+            getattr(retriever, "secondary_policy_rejection_count", 0)
+        ),
+        "fail_closed_count": int(
+            getattr(retriever, "fail_closed_count", 0)
+        ),
+        "fusion_fallback_count": int(
+            getattr(retriever, "fusion_fallback_count", 0)
+        ),
+        "active_reranker_model": str(
+            getattr(retriever, "active_reranker_model", "")
+        ),
+        "last_fallback_reason_code": str(
+            getattr(retriever, "last_fallback_reason_code", "")
+        ),
         "answerability_rejection_count": int(
             getattr(retriever, "answerability_rejection_count", 0)
         ),
@@ -219,12 +242,32 @@ def _assert_healthy_runtime(
     health: Mapping[str, object],
 ) -> None:
     query_failures = int(health["query_failure_count"])
-    reranker_fallbacks = int(health["reranker_fallback_count"])
-    if query_failures or reranker_fallbacks:
+    primary_failures = int(health["primary_reranker_failure_count"])
+    secondary_usage = int(health["secondary_reranker_usage_count"])
+    secondary_failures = int(health["secondary_reranker_failure_count"])
+    secondary_policy_rejections = int(
+        health["secondary_policy_rejection_count"]
+    )
+    fail_closed = int(health["fail_closed_count"])
+    fusion_fallbacks = int(health["fusion_fallback_count"])
+    if (
+        query_failures
+        or primary_failures
+        or secondary_usage
+        or secondary_failures
+        or secondary_policy_rejections
+        or fail_closed
+        or fusion_fallbacks
+    ):
         raise RuntimeError(
             f"{mode} evaluation degraded: query_failures={query_failures}, "
-            f"reranker_fallbacks={reranker_fallbacks}. Refusing to freeze "
-            "fallback output as a healthy Phase 0 baseline."
+            f"primary_reranker_failures={primary_failures}, "
+            f"secondary_usage={secondary_usage}, "
+            f"secondary_failures={secondary_failures}, "
+            f"secondary_policy_rejections={secondary_policy_rejections}, "
+            f"fail_closed={fail_closed}, "
+            f"fusion_fallbacks={fusion_fallbacks}. Refusing to freeze "
+            "degraded output as a healthy Phase 0 baseline."
         )
 
 
@@ -280,14 +323,22 @@ def _build_report(
 
     health_lines = [
         "| mode | implementation | source | query failures "
-        "| reranker fallbacks | answerability rejections |",
-        "|---|---|---|---:|---:|---:|",
+        "| primary failures | secondary uses | secondary failures "
+        "| secondary policy rejects | fail closed | fusion fallback | active model "
+        "| answerability rejections |",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|---:|",
     ]
     for mode, health in health_by_mode.items():
         health_lines.append(
             f"| {mode} | {health['implementation']} | {health['source']} | "
             f"{health['query_failure_count']} | "
-            f"{health['reranker_fallback_count']} | "
+            f"{health['primary_reranker_failure_count']} | "
+            f"{health['secondary_reranker_usage_count']} | "
+            f"{health['secondary_reranker_failure_count']} | "
+            f"{health['secondary_policy_rejection_count']} | "
+            f"{health['fail_closed_count']} | "
+            f"{health['fusion_fallback_count']} | "
+            f"{health['active_reranker_model'] or '—'} | "
             f"{health['answerability_rejection_count']} |"
         )
 
@@ -360,13 +411,21 @@ def _build_report(
     )
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(
+    argv: Sequence[str] | None = None,
+    *,
+    spec: Phase0BaselineSpec = PHASE0_V1_SPEC,
+) -> int:
     """Initialize or execute the fail-closed Phase 0 baseline."""
     args = _parse_args(argv)
     cases: list[BaselineCase] = load_baseline_cases()
 
     if args.initialize_manifest:
-        manifest = write_phase0_manifest(cases)
+        manifest = write_phase0_manifest(
+            cases,
+            path=spec.manifest_path,
+            spec=spec,
+        )
         print(
             f"Initialized {manifest['baseline_id']} manifest. "
             "Review and version it before relying on the baseline."
@@ -374,14 +433,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     if args.verify_manifest_only:
-        manifest = verify_phase0_manifest(cases)
+        manifest = verify_phase0_manifest(
+            cases,
+            path=spec.manifest_path,
+            spec=spec,
+        )
         print(
             f"{manifest['baseline_id']} exactly matches the current "
             "source, dataset, corpus, contract, and runtime config."
         )
         return 0
 
-    manifest = verify_phase0_manifest(cases)
+    manifest = verify_phase0_manifest(
+        cases,
+        path=spec.manifest_path,
+        spec=spec,
+    )
     checks = [*run_local_checks(), run_contract_check()]
 
     external_modes = set(args.modes) & {"semantic", "hybrid"}
@@ -415,8 +482,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     generated_at = datetime.now().astimezone().isoformat(timespec="seconds")
     environment = environment_snapshot()
     payload = {
-        "schema_version": "enterprise-phase0-baseline-report-v1",
-        "baseline_id": PHASE0_BASELINE_ID,
+        "schema_version": spec.report_schema_version,
+        "baseline_id": spec.baseline_id,
         "generated_at": generated_at,
         "manifest": manifest,
         "environment": environment,
@@ -450,11 +517,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             }
         ),
     }
-    PHASE0_RESULTS_JSON_PATH.write_text(
+    spec.results_json_path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    PHASE0_RESULTS_MARKDOWN_PATH.write_text(
+    spec.results_markdown_path.write_text(
         _build_report(
             generated_at=generated_at,
             manifest=manifest,
@@ -470,8 +537,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
 
     print(retrieval_summary_table(metrics_by_mode))
-    print(f"\nWritten to {PHASE0_RESULTS_MARKDOWN_PATH.name}")
-    print(f"Written to {PHASE0_RESULTS_JSON_PATH.name}")
+    print(f"\nWritten to {spec.results_markdown_path.name}")
+    print(f"Written to {spec.results_json_path.name}")
     if answer_evaluation is not None and not answer_evaluation.passed:
         print(
             "Answer-level quality gates did not pass; the measured result "

@@ -1,0 +1,178 @@
+{
+  "schema_version": "track-a-closure-freeze-v1",
+  "closure_id": "track-a-closure-v2",
+  "created_at": "2026-07-28",
+  "repository": {
+    "base_commit": "fd3ac95f3f2ecc0ae3df9746d329802f656d1432",
+    "pre_upgrade_commit": "5e8537b3d0db8395e2a12dc008f9e3184e2bda6f",
+    "remediation_branch": "fix/track-a-closure"
+  },
+  "governance": {
+    "plan": {
+      "path": "TRACK_A_CLOSURE_REMEDIATION_PLAN.md",
+      "sha256": "a37baacf94e254d9bee4d6b268c0c5bca01ab26ed2dacbd31f62b6c32c736b7a",
+      "bytes": 45001
+    },
+    "official_evaluation_requires_clean_worktree": true,
+    "historical_artifacts_must_not_be_overwritten": true,
+    "published_artifacts_exclude_secrets": true,
+    "published_artifacts_exclude_raw_queries": true,
+    "published_artifacts_exclude_document_bodies": true
+  },
+  "frozen_inputs": {
+    "dataset": {
+      "version": "lean-quality-v1",
+      "case_count": 40,
+      "file": {
+        "path": "src/evaluation/datasets/lean_quality_v1.json",
+        "sha256": "3f80666e6dfd77b7a668eb82c3a5dc6f79a8eed12a97988fc499bdccaf55ff3f",
+        "bytes": 10019
+      },
+      "manifest": {
+        "path": "src/evaluation/datasets/lean_quality_v1.manifest.json",
+        "sha256": "2c956b7157763bca37984ab640aa48dc665c4a12362a9c2579ba41a9f7fce29e",
+        "bytes": 1228
+      }
+    },
+    "corpus": {
+      "algorithm": "sha256(length-prefixed-relative-path-and-bytes-v1)",
+      "sha256": "e09382f19b18ef2a52e1e93826e81852ee649d4bb5ddccb74a1865b8b60fe5c4",
+      "section_count": 54,
+      "file": {
+        "path": "knowledge_base.txt",
+        "sha256": "a244c2b03a529d1244a721a468b8d37ac148216b25d3c6a3a83c2e4d2847c256",
+        "bytes": 41501
+      }
+    },
+    "dependencies": [
+      {
+        "path": "requirements-dev.txt",
+        "sha256": "cd4ce4d8c279b534bbac6313a62bd1de5590d6b6cb7bf8e5a6b321edc97d04e1",
+        "bytes": 309
+      },
+      {
+        "path": "requirements.txt",
+        "sha256": "eb09e3cf6d063bd6251b216dd8122f78aadf276d8dd5895797e072edb075df0d",
+        "bytes": 418
+      }
+    ],
+    "runtime_configuration": [
+      {
+        "path": ".env.example",
+        "sha256": "3d5e305cedc0346dfe4e94351c0fba5c4dea5767984d74b5e960415f0238991e",
+        "bytes": 1138
+      },
+      {
+        "path": "src/config.py",
+        "sha256": "7013fe74f3afdd9c457e438163e8d261d917051d9e2cb228a4ef15446b555651",
+        "bytes": 5655
+      },
+      {
+        "path": "src/evaluation/datasets/enterprise_phase0_v1.manifest.json",
+        "sha256": "372e945858cba67a10a7ffd0873b035c79408951d2e9d8801777897d37df3e08",
+        "bytes": 4351
+      }
+    ],
+    "retriever_contract": {
+      "version": "1.0.0",
+      "file": {
+        "path": "docs/RETRIEVER_CONTRACT.md",
+        "sha256": "222426794231eaa14cea78a9ad17cb0ea1d3e9a0fc209f52a6d88236ae323457",
+        "bytes": 4123
+      }
+    },
+    "prompt_sources": [
+      {
+        "path": "src/agents/reporter.py",
+        "sha256": "a649e2c3bcc080a7dbfcd76071752fb4f74980b0bf8819126d098a6c3df051f2",
+        "bytes": 3144
+      },
+      {
+        "path": "src/agents/retriever.py",
+        "sha256": "a737c0b63c7b9c8b7612c5f0e19e945ee8e098f6092293299b9ad6868965e3d8",
+        "bytes": 5979
+      },
+      {
+        "path": "src/agents/rewriter.py",
+        "sha256": "b6591ab928aeae5efef2b485e4be32d1d4549311d0d2747b41df31bec8e5eee4",
+        "bytes": 3667
+      },
+      {
+        "path": "src/agents/router.py",
+        "sha256": "347670bb7f3a854248b08c60ed5d23cda96f521adadea2a3d034613e1c2d79a6",
+        "bytes": 4223
+      }
+    ],
+    "models": {
+      "embedding": {
+        "model": "text-embedding-3-small"
+      },
+      "generator": {
+        "model": "gpt-5-mini"
+      },
+      "primary_reranker": {
+        "model": "BAAI/bge-reranker-v2-m3",
+        "revision": "b4019bcd5cae485c342f61fe5889c2c800c5abec"
+      },
+      "secondary_reranker": {
+        "status": "not-configured-at-r0",
+        "owner": "R2-02",
+        "required_before_official_evaluation": true
+      }
+    }
+  },
+  "immutable_artifacts": [
+    {
+      "path": "baseline_results.json",
+      "sha256": "8fbbc0d33ac9ab8a678c5cd3154eb397a436a99948360f1a9928dbea9618b3c7",
+      "bytes": 20998
+    },
+    {
+      "path": "baseline_results.md",
+      "sha256": "3fdf2888c34fa1aecb5c7c82a59cbdf1360604bc4cc472988d98ef5625f1fb4e",
+      "bytes": 5983
+    },
+    {
+      "path": "phase0_baseline_results.json",
+      "sha256": "c545f15f8525affaeb7858d5f13ee6500f451309e6a0f952ea7811df1ebdc79b",
+      "bytes": 64643
+    },
+    {
+      "path": "phase0_baseline_results.md",
+      "sha256": "b526292e8ab924c78a74c1630beec7d3e44a2674e6d2500019bff99bf70371dc",
+      "bytes": 15121
+    },
+    {
+      "path": "src/evaluation/datasets/lean_quality_v1.json",
+      "sha256": "3f80666e6dfd77b7a668eb82c3a5dc6f79a8eed12a97988fc499bdccaf55ff3f",
+      "bytes": 10019
+    },
+    {
+      "path": "src/evaluation/datasets/lean_quality_v1.manifest.json",
+      "sha256": "2c956b7157763bca37984ab640aa48dc665c4a12362a9c2579ba41a9f7fce29e",
+      "bytes": 1228
+    },
+    {
+      "path": "track_a_step3_results.json",
+      "sha256": "273347be09f4121c800fe6ff8693c7cbd8d3ab921047564af65e76f409823a54",
+      "bytes": 120646
+    },
+    {
+      "path": "track_a_step3_results.md",
+      "sha256": "4dc0561c89383455fc24e17fa751fb29d2167cb317c2357b7b4ac68c1f02e4c8",
+      "bytes": 4338
+    }
+  ],
+  "planned_artifacts": [
+    "docs/TRACK_A_DECISION_RECORD.md",
+    "track_a_ablation_results_v2.json",
+    "track_a_ablation_results_v2.md",
+    "track_a_answer_results_v2.json",
+    "track_a_answer_results_v2.md",
+    "track_a_closure_report_v2.md",
+    "track_a_performance_results_v2.json",
+    "track_a_performance_results_v2.md",
+    "track_a_pre_upgrade_baseline_v2.json",
+    "track_a_pre_upgrade_baseline_v2.md"
+  ]
+}

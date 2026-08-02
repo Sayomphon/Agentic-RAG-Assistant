@@ -1,0 +1,178 @@
+{
+  "schema_version": "enterprise-phase0-manifest-v2",
+  "baseline_id": "enterprise-phase0-v2",
+  "created_at": "2026-08-02",
+  "retriever_contract_version": "1.0.0",
+  "dataset": {
+    "version": "lean-quality-v1",
+    "file": "src/evaluation/datasets/lean_quality_v1.json",
+    "sha256": "3f80666e6dfd77b7a668eb82c3a5dc6f79a8eed12a97988fc499bdccaf55ff3f",
+    "case_count": 40,
+    "category_distribution": {
+      "english_answerable": 10,
+      "thai_answerable": 10,
+      "mixed_answerable": 5,
+      "negative": 10,
+      "multi_section": 5
+    },
+    "language_distribution": {
+      "en": 25,
+      "th": 10,
+      "mixed": 5
+    }
+  },
+  "corpus": {
+    "algorithm": "sha256(length-prefixed-relative-path-and-bytes-v1)",
+    "sha256": "e09382f19b18ef2a52e1e93826e81852ee649d4bb5ddccb74a1865b8b60fe5c4",
+    "source_files": [
+      "knowledge_base.txt"
+    ],
+    "source_file_count": 1,
+    "section_count": 54,
+    "total_bytes": 41501
+  },
+  "source_tree": {
+    "algorithm": "sha256(length-prefixed-relative-path-and-bytes-v1)",
+    "sha256": "a5000c41d570c179171200ccf9265d0e621ac755763501cb8f5fa08012178c0f",
+    "file_count": 70,
+    "total_bytes": 653113,
+    "files": [
+      ".env.example",
+      "app.py",
+      "docs/RETRIEVER_CONTRACT.md",
+      "main.py",
+      "requirements-dev.txt",
+      "requirements.txt",
+      "src/__init__.py",
+      "src/agents/__init__.py",
+      "src/agents/reporter.py",
+      "src/agents/retriever.py",
+      "src/agents/rewriter.py",
+      "src/agents/router.py",
+      "src/config.py",
+      "src/evaluation/__init__.py",
+      "src/evaluation/baseline_dataset.py",
+      "src/evaluation/baseline_support.py",
+      "src/evaluation/legacy_step1_worker.py",
+      "src/evaluation/phase0.py",
+      "src/evaluation/regression.py",
+      "src/evaluation/run_answer_eval.py",
+      "src/evaluation/run_baseline.py",
+      "src/evaluation/run_eval.py",
+      "src/evaluation/run_measure_tune.py",
+      "src/evaluation/run_phase0.py",
+      "src/evaluation/run_phase0_v2.py",
+      "src/evaluation/run_qa.py",
+      "src/evaluation/run_r2_safety.py",
+      "src/evaluation/run_track_a_ablation.py",
+      "src/evaluation/run_track_a_answer_eval.py",
+      "src/evaluation/run_track_a_closure.py",
+      "src/evaluation/run_track_a_performance.py",
+      "src/evaluation/testset.py",
+      "src/evaluation/track_a_closure.py",
+      "src/evaluation/track_a_r1.py",
+      "src/evaluation/track_a_r3.py",
+      "src/graph.py",
+      "src/retrievers/__init__.py",
+      "src/retrievers/base.py",
+      "src/retrievers/context.py",
+      "src/retrievers/dense.py",
+      "src/retrievers/factory.py",
+      "src/retrievers/hybrid.py",
+      "src/retrievers/keyword.py",
+      "src/retrievers/reranker.py",
+      "src/tools/__init__.py",
+      "src/tools/retrieval.py",
+      "tests/__init__.py",
+      "tests/test_baseline_evaluation.py",
+      "tests/test_cli_errors.py",
+      "tests/test_config.py",
+      "tests/test_context_builder.py",
+      "tests/test_dense_fallback.py",
+      "tests/test_hybrid_retrieval.py",
+      "tests/test_keyword_tokenization.py",
+      "tests/test_measure_tune.py",
+      "tests/test_phase0_evaluation.py",
+      "tests/test_phase0_v2_evaluation.py",
+      "tests/test_r2_safety.py",
+      "tests/test_reranker.py",
+      "tests/test_retrieval.py",
+      "tests/test_retriever_agent.py",
+      "tests/test_retriever_contract.py",
+      "tests/test_rewriter_loop.py",
+      "tests/test_router.py",
+      "tests/test_thai_retrieval_integration.py",
+      "tests/test_track_a_answer_eval.py",
+      "tests/test_track_a_closure.py",
+      "tests/test_track_a_performance.py",
+      "tests/test_track_a_r1.py",
+      "tests/test_track_a_r3.py"
+    ]
+  },
+  "runtime_config": {
+    "serving": {
+      "top_k": 6,
+      "candidate_k": 12,
+      "max_search_attempts": 3,
+      "max_context_chars": 6000,
+      "retrieval_profile": "track_a_balanced_v1",
+      "search_mode": "hybrid"
+    },
+    "keyword": {
+      "min_score": 2.0,
+      "min_matched_terms": 2,
+      "min_relative_score": 0.55,
+      "title_boost": 1.5,
+      "thai_tokenizer_enabled": true
+    },
+    "dense": {
+      "embedding_model": "text-embedding-3-small",
+      "min_cosine": 0.38,
+      "hybrid_min_cosine": 0.2
+    },
+    "fusion": {
+      "method": "rrf",
+      "rrf_k": 60,
+      "dense_weight": 0.5
+    },
+    "reranker": {
+      "enabled": true,
+      "model": "BAAI/bge-reranker-v2-m3",
+      "model_revision": "b4019bcd5cae485c342f61fe5889c2c800c5abec",
+      "batch_size": 4,
+      "timeout_seconds": 10.0,
+      "max_candidates": 30,
+      "max_length": 512,
+      "min_score": 0.01,
+      "local_files_only": true,
+      "failure_policy": "fail_closed",
+      "fallback_enabled": true,
+      "fallback_model": "BAAI/bge-reranker-base",
+      "fallback_model_revision": "2cfc18c9415c912f9d8155881c133215df768a70",
+      "fallback_max_length": 512,
+      "fallback_min_score": 0.01
+    },
+    "context": {
+      "duplicate_threshold": 0.9,
+      "min_body_chars": 80
+    },
+    "generation": {
+      "model": "gpt-5-mini",
+      "temperature": 0.0
+    }
+  },
+  "evaluation_policy": {
+    "default_modes": [
+      "keyword"
+    ],
+    "external_modes": [
+      "semantic",
+      "hybrid"
+    ],
+    "top_k": 6,
+    "query_embeddings_require_explicit_flag": true,
+    "answer_evaluation_requires_explicit_flag": true,
+    "reports_store_raw_queries": false,
+    "reports_store_document_bodies": false
+  }
+}
