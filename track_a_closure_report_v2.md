@@ -1,6 +1,6 @@
 # Track A Closure Report v2
 
-- Generated at: 2026-08-02T16:36:18+07:00
+- Generated at: 2026-08-02T16:44:38+07:00
 - Track A Status: `NOT_APPROVED`
 - Closure policy: fail closed; ไม่อนุมัติจากผลเฉลี่ยเมื่อมี Blocking Gate ใดล้มเหลว
 - Selected Profile: `track_a_balanced_v1` (measured candidate; not promoted)
@@ -63,7 +63,7 @@ Blocking findings: citation coverage ต่ำกว่า 100%, มีหนึ
 | Human/Domain review | FAIL | PENDING_HUMAN_APPROVAL |
 | Product/Business approval | FAIL | PENDING_PRODUCT_BUSINESS_APPROVAL |
 | R3 decision authorization | FAIL | REJECT_AND_RETUNE; authorization=not granted by this record. |
-| Enterprise Phase 0 v2 checkpoint | FAIL | Versioned manifest and three-mode result are not both present. |
+| Enterprise Phase 0 v2 checkpoint | PASS | Versioned manifest/report match; Keyword/Semantic/Hybrid and all local gates are present. |
 
 ## 7. Risk Acceptance and Governance
 
@@ -87,7 +87,9 @@ Blocking findings: citation coverage ต่ำกว่า 100%, มีหนึ
 | Artifact | SHA-256 | Bytes |
 |---|---|---:|
 | `docs/TRACK_A_DECISION_RECORD.md` | `4c92a6864ee780025ed0dd56625c709bfb9cd148899da11aea459df935030a6d` | 8174 |
+| `phase0_v2_baseline_results.json` | `d59472f260cd90778106002a34271666f0e0434a45e9a2fe32e0e8272735bc58` | 66674 |
 | `src/evaluation/configs/track_a_balanced_v1.json` | `d466f1a43fd7d48319b77be1c310a0da4016a18781ef4baf0cff026cdefa38ef` | 437 |
+| `src/evaluation/datasets/enterprise_phase0_v2.manifest.json` | `cfd6778d4d2fbed28d65e025dd447ba59f31bc03adb8d0e4e44f5c4b2a97316e` | 5462 |
 | `track_a_ablation_results_v2.json` | `1cac2890b7324ac987ed6c9fb2bb592fc027b592ff20a323c9ca509c6f9c2715` | 181046 |
 | `track_a_answer_results_v2.json` | `cef2631d38f872e139440992dbd0c068ef64c5a4ec7871d46dfbc93f69f7b241` | 50439 |
 | `track_a_performance_results_v2.json` | `092ae53f18cdb90ff30d111423194b4c2e91b7602c0e934782dcc72f9b382ca5` | 14764 |

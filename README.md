@@ -300,6 +300,61 @@ in:
 - [`track_a_performance_results_v2.md`](track_a_performance_results_v2.md)
 - [`docs/TRACK_A_DECISION_RECORD.md`](docs/TRACK_A_DECISION_RECORD.md)
 
+### Track A closure — R4 final checkpoint
+
+R4 validates the R0–R3 evidence bundle, verifies that every historical
+artifact still matches its frozen identity, and computes closure from
+machine-readable gates rather than treating the Decision Record prose as an
+approval. Generate the sanitized aggregate report locally:
+
+```bash
+venv/bin/python -m src.evaluation.run_track_a_closure --write-r4-report
+```
+
+The resulting
+[`track_a_closure_report_v2.md`](track_a_closure_report_v2.md) records
+`Track A Status: NOT_APPROVED`. Retrieval and runtime-safety gates passed, but
+final-answer quality, performance, Human/Domain review, Product/Business
+approval, and R3 authorization remain blocking. The Parent Plan is therefore
+not marked complete, `track_a_balanced_v1` remains a measured candidate rather
+than a production promotion, and Enterprise Phase 1 is not authorized.
+
+Enterprise Phase 0 v2 is still frozen as a post-remediation technical
+checkpoint. It adds the named retrieval profile, fail-closed policy, and
+immutable Primary/Secondary reranker identities without overwriting the
+historical v1 manifest or reports:
+
+```bash
+RETRIEVAL_PROFILE=track_a_balanced_v1 \
+SEARCH_MODE=hybrid \
+RERANKER_LOCAL_FILES_ONLY=true \
+  venv/bin/python -m src.evaluation.run_phase0_v2 \
+    --verify-manifest-only
+
+RETRIEVAL_PROFILE=track_a_balanced_v1 \
+SEARCH_MODE=hybrid \
+RERANKER_LOCAL_FILES_ONLY=true \
+  venv/bin/python -m src.evaluation.run_phase0_v2 \
+    --modes keyword semantic hybrid \
+    --allow-query-embeddings
+```
+
+The second command requires explicit approval to send only the 40 evaluation
+queries to OpenAI Embeddings. It requires the verified local corpus cache and
+does not approve corpus embeddings or answer evaluation. The accepted v2 run
+recorded:
+
+- Keyword: Recall@6 63.89%, MRR 0.650, Not-found 30%, p95 0.6 ms
+- Semantic: Recall@6 68.33%, MRR 0.667, Not-found 50%, p95 683.9 ms
+- Hybrid + Primary reranker: Recall@6 88.89%, MRR 0.900, Not-found 80%,
+  p95 1,498.7 ms
+- Healthy-run provider failures, Primary failures, Secondary uses,
+  fail-closed events, and fusion fallbacks: all zero
+
+The versioned outputs are
+[`phase0_v2_baseline_results.md`](phase0_v2_baseline_results.md) and
+[`src/evaluation/datasets/enterprise_phase0_v2.manifest.json`](src/evaluation/datasets/enterprise_phase0_v2.manifest.json).
+
 ### Track A — Step 1 mini baseline
 
 The versioned Lean Quality dataset adds 40 cases: 10 Thai answerable,
@@ -357,9 +412,10 @@ runner also rejects dirty worktrees, mismatched commits or hashes, provider
 failures, fallbacks, duplicate JSON keys, raw queries, document bodies,
 prompts, credentials, and attempts to overwrite the v2 artifact.
 
-### Enterprise Track — Phase 0 baseline and contract freeze
+### Enterprise Track — historical Phase 0 v1 baseline and contract freeze
 
-Phase 0 freezes the post-Track-A system before Qdrant or ACL work begins. It
+Historical Phase 0 v1 froze the pre-remediation post-Track-A system before
+Qdrant or ACL work began. It
 reuses the 40 reviewed Thai/English/mixed/negative/multi-section cases, but
 creates an independent Enterprise manifest that fingerprints the corpus,
 source and tests, dependency/config templates, complete non-secret runtime
