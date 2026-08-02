@@ -45,6 +45,11 @@ from src.evaluation.track_a_r3 import (
     write_versioned_pair,
 )
 from src.graph import build_graph
+from src.guardrails.answer import (
+    cited_titles as _guardrail_cited_titles,
+    context_titles as _guardrail_context_titles,
+    factual_units as _guardrail_factual_units,
+)
 from src.retrievers.base import ScoredChunk, load_chunks
 
 RESULTS_JSON_PATH = PROJECT_ROOT / "track_a_answer_results_v2.json"
@@ -56,10 +61,7 @@ PRIVATE_REVIEW_PATH = (
 
 _SCHEMA_VERSION = "track-a-r3-answer-evaluation-v2"
 _REVIEW_SCHEMA_VERSION = "track-a-r3-human-review-v1"
-_CITATION_PATTERN = re.compile(r"\[([^\[\]\n]+)\]")
-_HEADER_PATTERN = re.compile(r"^\[([^\[\]\n]+)\]\n")
 _THAI_PATTERN = re.compile(r"[\u0e00-\u0e7f]")
-_SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?。！？])\s+(?=[^\[])")
 _CONTROL_CHARACTERS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 _FAITHFULNESS_THRESHOLD = 0.95
@@ -148,18 +150,17 @@ class CaseEvaluation:
 
 def context_titles(snippets: Sequence[str]) -> tuple[str, ...]:
     """Extract exact context headers and reject malformed snippet framing."""
-    titles: list[str] = []
-    for snippet in snippets:
-        match = _HEADER_PATTERN.match(snippet)
-        if match is None:
-            raise R3ValidationError("Generator context contains an invalid header.")
-        titles.append(match.group(1))
-    return tuple(titles)
+    try:
+        return _guardrail_context_titles(snippets)
+    except ValueError:
+        raise R3ValidationError(
+            "Generator context contains an invalid header."
+        ) from None
 
 
 def cited_titles(response: str) -> tuple[str, ...]:
     """Return unique citations in their first-seen order."""
-    return tuple(dict.fromkeys(_CITATION_PATTERN.findall(response)))
+    return _guardrail_cited_titles(response)
 
 
 def factual_units(response: str) -> tuple[tuple[str, bool], ...]:
@@ -169,20 +170,7 @@ def factual_units(response: str) -> tuple[tuple[str, bool], ...]:
     units. A citation at the end of one sentence does not cover a preceding
     uncited sentence on the same line.
     """
-    if response == NOT_FOUND_SENTENCE:
-        return ()
-    output: list[tuple[str, bool]] = []
-    for raw_line in response.splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        line = re.sub(r"^(?:[-*+]|\d+[.)])\s+", "", line)
-        for sentence in _SENTENCE_BOUNDARY.split(line):
-            unit = sentence.strip()
-            if not unit or not re.sub(_CITATION_PATTERN, "", unit).strip():
-                continue
-            output.append((unit, bool(_CITATION_PATTERN.search(unit))))
-    return tuple(output)
+    return _guardrail_factual_units(response)
 
 
 def validate_response(

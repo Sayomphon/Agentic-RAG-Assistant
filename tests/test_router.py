@@ -136,7 +136,9 @@ class RouterGraphTests(unittest.TestCase):
                 source="bm25",
             )
         ]
-        mock_reporter_llm.return_value = _FakeChatLLM("travel answer")
+        mock_reporter_llm.return_value = _FakeChatLLM(
+            "travel answer. [International Travel]"
+        )
 
         result = build_graph().invoke(
             _initial_state("What is the policy on international travel?")
@@ -144,7 +146,10 @@ class RouterGraphTests(unittest.TestCase):
 
         mock_search.assert_called_once()
         self.assertEqual(result["route"], ROUTE_KB)
-        self.assertEqual(result["report"], "travel answer")
+        self.assertEqual(
+            result["report"],
+            "travel answer. [International Travel]",
+        )
 
 
 if __name__ == "__main__":

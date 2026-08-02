@@ -92,14 +92,16 @@ class RewriterLoopTests(unittest.TestCase):
         mock_router_llm.return_value = _FakeToolLLM([{"args": {"route": "kb_query"}}])
         mock_retriever_llm.return_value = _FakeToolLLM([_search_call("annual leave")])
         mock_search.return_value = _fake_hits(2)
-        mock_reporter_llm.return_value = _FakeChatLLM("grounded answer")
+        mock_reporter_llm.return_value = _FakeChatLLM(
+            "grounded answer. [T0]"
+        )
 
         result = build_graph().invoke(_initial_state("annual leave"))
 
         mock_rewriter_llm.assert_not_called()
         mock_search.assert_called_once()
         self.assertEqual(result["search_attempts"], ["annual leave"])
-        self.assertEqual(result["report"], "grounded answer")
+        self.assertEqual(result["report"], "grounded answer. [T0]")
 
     def test_empty_first_attempt_retries_with_rewritten_query(
         self,
@@ -116,7 +118,9 @@ class RewriterLoopTests(unittest.TestCase):
         )
         # First attempt misses; the rewritten query hits.
         mock_search.side_effect = [[], _fake_hits(1)]
-        mock_reporter_llm.return_value = _FakeChatLLM("resignation answer")
+        mock_reporter_llm.return_value = _FakeChatLLM(
+            "resignation answer. [T0]"
+        )
 
         result = build_graph().invoke(_initial_state("I want to quit my job"))
 
@@ -129,7 +133,7 @@ class RewriterLoopTests(unittest.TestCase):
             result["search_attempts"],
             ["I want to quit my job", "resignation notice period process"],
         )
-        self.assertEqual(result["report"], "resignation answer")
+        self.assertEqual(result["report"], "resignation answer. [T0]")
         # The retriever LLM ran only on the first attempt; the retry
         # trusted the rewriter's query directly.
         self.assertEqual(mock_retriever_llm.call_count, 1)
